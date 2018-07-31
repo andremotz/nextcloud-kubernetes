@@ -1,0 +1,57 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: nc
+  name: nc
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: nc
+    spec:
+      containers:
+      - env:
+        - name: TZ
+          value: Europe/Berlin
+        - name: DEBUG
+          value: "false"
+        - name: NEXTCLOUD_URL
+          value: http://<someDomain>
+        - name: NEXTCLOUD_ADMIN_USER
+          value: admin
+        - name: NEXTCLOUD_ADMIN_PASSWORD
+          value: <someNextCloudAdminPass>
+        - name: NEXTCLOUD_UPLOAD_MAX_FILESIZE
+          value: 4G
+        - name: NEXTCLOUD_MAX_FILE_UPLOADS
+          value: "20"
+          
+        - name: MYSQL_DATABASE
+          value: nextcloud
+        - name: MYSQL_HOST
+          value: db
+        - name: MYSQL_PASSWORD
+          value: <someMysqlPass>
+        - name: MYSQL_USER
+          value: nextcloud
+        name: nc
+        image: nextcloud
+        ports:
+        - containerPort: 80
+          protocol: TCP
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+        volumeMounts:
+        - mountPath: /var/www/html
+          name: html
+      restartPolicy: Always
+      volumes:
+        - name: html
+          hostPath:
+            path: "/home/<someFolderLocation>/nc-pv"
+
+

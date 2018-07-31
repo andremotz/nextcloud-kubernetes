@@ -1,0 +1,35 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  labels:
+    app: db
+  name: db
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: db
+    spec:
+      containers:
+      - env:
+        - name: MYSQL_DATABASE
+          value: nextcloud
+        - name: MYSQL_PASSWORD
+          value: <someMySqlPass>
+        - name: MYSQL_USER
+          value: nextcloud
+        - name: MYSQL_ROOT_PASSWORD
+          value: <someMySqlRootPass>
+        image: mariadb
+        name: db
+        volumeMounts:
+        - mountPath: /var/lib/mysql
+          name: db
+      restartPolicy: Always
+      volumes:
+      - name: db
+        hostPath:
+          path: "/home/<someFolderLocation>/db-pv"
