@@ -41,8 +41,8 @@ spec:
         type: Socket
     - name: nginx-config
       hostPath:
-        path: "/home/andremotz/<someFolderLocation>/nginx.conf"
+        path: "/home/<someFolderLocation>/nginx.conf"
         type: File
     - name: nginx-logs
       hostPath:
-        path: "/home/andremotz/<someFolderLocation>/nginx-logs"
+        path: "/home/<someFolderLocation>/nginx-logs"
