@@ -14,7 +14,9 @@ spec:
     name: proxy
     image: nginx
     ports:
-
+    - containerPort: 80
+      protocol: TCP
+      hostPort: 80
     - containerPort: 443
       protocol: TCP
       hostPort: 443
