@@ -101,5 +101,11 @@ $ nano proxy-pod.yaml
 $ kubectl create -f proxy-pod.yaml
 ```
 Now you should be able to point your browser to https://<yourserver> and see a new Nextcloud-instance, running on a super-hyper nextlevel-Kubernetes cluster, that you could use for further cool stuff 😉
+  
+## Final hint
+Disable swap permanently – add a comment to the /etc/fstab – swap entry like this:
+```
+#/swap.img none swap sw 0 0
+```
 
 That’s it!! 😉
