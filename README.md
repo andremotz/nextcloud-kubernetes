@@ -5,8 +5,11 @@ For more background information check out my blog-post at https://www.andremotz.
 
 These YAMLs can be used on a Kubernetes-cluster to set-up a Nextcloud using MariaDB and Nginx as a SSL/TLS-Proxy. The YAMLs were tested on Ubuntu 18.04 but should be compatible with any Kubernetes-cluster.
 
+## Updates:
+* 2019-12-02: Updated Deployments: added selector/matchLabels, changed apiVersion: apps/v1
+
 ## Prerequisites:
-* Installed Ubuntu 18.04 
+* Installed Ubuntu 18.04
 * Basic Docker & Kubernetes knowledge
 
 Source: https://linuxconfig.org/how-to-install-kubernetes-on-ubuntu-18-04-bionic-beaver-linux
