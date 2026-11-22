@@ -3,7 +3,7 @@ nextcloud for kubernetes
 
 For more background information check out my blog-post at https://www.andremotz.com/nextcloud-docker-on-kubernetes-cluster-ssl-certificates/ 
 
-These YAMLs can be used on a Kubernetes-cluster to set-up a Nextcloud using MariaDB and Nginx as a SSL/TLS-Proxy. The YAMLs were tested on Ubuntu 18.04 but should be compatible with any Kubernetes-cluster.
+These YAMLs can be used on a Kubernetes-cluster to set-up a Nextcloud using MariaDB and Nginx as a SSL/TLS-Proxy. The YAMLs were originally tested on Ubuntu 18.04 in 2018; the current versions have not yet been tested on a cluster (see `docs/backlog.md`).
 
 ## Updates:
 * 2026-11-22: Pinned image versions, see "Image versions" below
@@ -25,27 +25,18 @@ These versions are pinned but not yet tested together on a cluster.
 **If you already run an older install of this setup:** Nextcloud can only be upgraded one major version at a time. Check your current version (Settings → Administration → Overview) and step through each major version (e.g. `nextcloud:32-apache`, then `33-apache`, then `34.0.6-apache`) instead of jumping straight to the pinned version. Make a backup of the database and the `nc-pv` folder first. MariaDB upgrades its data files automatically on start (`MARIADB_AUTO_UPGRADE`), but it cannot downgrade them: if your running MariaDB is already newer than 11.8 (check with `kubectl exec deploy/db -- mariadb --version`), pin that version instead.
 
 ## Prerequisites:
-* Installed Ubuntu 18.04
+* A single-node Kubernetes cluster. All data is stored in folders on that node (`hostPath`), so these YAMLs do not work across several nodes.
 * Basic Docker & Kubernetes knowledge
 
-Source: https://linuxconfig.org/how-to-install-kubernetes-on-ubuntu-18-04-bionic-beaver-linux
+The original 2018 walkthrough (Ubuntu 18.04, Docker, `apt.kubernetes.io`) no longer works: the package repository was shut down and Kubernetes dropped direct Docker support in 1.24. Set up a cluster with the official guides instead:
 
-```
-$ sudo apt update && sudo apt upgrade -y
-$ sudo apt install docker.io
-$ sudo systemctl enable docker
-$ curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | sudo apt-key add
-$ sudo apt-add-repository "deb http://apt.kubernetes.io/ kubernetes-xenial main"
-$ sudo apt install kubeadm
-$ sudo swapoff -a
-$ sudo kubeadm init --pod-network-cidr=10.244.0.0/16
-$ mkdir -p $HOME/.kube
-$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
-$ kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
-$ kubectl taint nodes --all node-role.kubernetes.io/master-
-```
-At this place you should note down the shown kubeadm join-message in your console to be able to connect further Kubernetes-nodes in the future.
+1. Install a container runtime (containerd is the usual choice): https://kubernetes.io/docs/setup/production-environment/container-runtimes/
+2. Install kubeadm, kubelet and kubectl: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
+3. Create the cluster with `kubeadm init --pod-network-cidr=10.244.0.0/16`, following https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
+4. Install the Flannel pod network: https://github.com/flannel-io/flannel
+5. Allow normal Pods on the single node: `kubectl taint nodes --all node-role.kubernetes.io/control-plane-`
+
+If you use a different pod network range, change `TRUSTED_PROXIES` in `nc-deployment.yaml` accordingly. A lighter alternative for a single machine is k3s (https://docs.k3s.io/quick-start); it ships its own Traefik ingress on ports 80/443, which would conflict with the nginx proxy Pod below unless disabled.
 
 **Extra-hint:** Use the following in an extra-terminal to be able to see what the Kubernetes-cluster is doing
 `$ watch -n 10 kubectl get deployment,svc,pods,pvc,pv,ing`
@@ -111,21 +102,17 @@ $ nano nginx.conf
 --> change server_name (two locations in the file!) to the server name you've provided before for SSL_SUBJECT
 --> change ssl_certificate to the filename you've provide before for SSL_CERT
 --> change ssl_certificate_key to the filename you've provide before for SSL_KEY
+--> if you changed PHP_UPLOAD_LIMIT in nc-deployment.yaml, change client_max_body_size to the same value
 
 $ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/master/kubernetes-yaml/proxy-pod.yaml
 
 $ nano proxy-pod.yaml
---> change cert's hostPath to the location you have provided before---> change nginx-config's hostpath to the location where you've stored nginx.conf before (eg. /home/andremotz/nc-deployment/nginx.conf)
+--> change cert's hostPath to the location you have provided before
+--> change nginx-config's hostpath to the location where you've stored nginx.conf before (eg. /home/andremotz/nc-deployment/nginx.conf)
 --> change nginx-logs' hostpath to a proper location
 
 $ kubectl create -f proxy-pod.yaml
 ```
 Now you should be able to point your browser to https://<yourserver> and see a new Nextcloud-instance, running on a super-hyper nextlevel-Kubernetes cluster, that you could use for further cool stuff 😉
   
-## Final hint
-Disable swap permanently – add a comment to the /etc/fstab – swap entry like this:
-```
-#/swap.img none swap sw 0 0
-```
-
 That’s it!! 😉
