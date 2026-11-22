@@ -7,7 +7,7 @@ These YAMLs can be used on a Kubernetes-cluster to set-up a Nextcloud using Mari
 
 ## Updates:
 * 2026-11-22: Pinned image versions, see "Image versions" below
-* 2026-11-22: Nextcloud now uses the environment variables of the official image (`NEXTCLOUD_TRUSTED_DOMAINS`, `OVERWRITEPROTOCOL`, `PHP_UPLOAD_LIMIT` and others). The old `NEXTCLOUD_URL` and `NEXTCLOUD_UPLOAD_MAX_FILESIZE` were ignored by the image. Trusted domains and proxy settings are written to `config.php` on first install; existing installs need to add them to `config/config.php` by hand.
+* 2026-11-22: Nextcloud now uses the environment variables of the official image (`NEXTCLOUD_TRUSTED_DOMAINS`, `OVERWRITEPROTOCOL`, `PHP_UPLOAD_LIMIT` and others). The old `NEXTCLOUD_URL` and `NEXTCLOUD_UPLOAD_MAX_FILESIZE` were ignored by the image. The image applies trusted domains during installation only, so existing installs should check `trusted_domains`, `overwriteprotocol` and `trusted_proxies` in `config/config.php` and add them by hand if they are missing.
 * 2019-12-02: Updated Deployments: added selector/matchLabels, changed apiVersion: apps/v1
 
 ## Image versions
