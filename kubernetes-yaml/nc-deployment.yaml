@@ -42,7 +42,7 @@ spec:
         - name: MYSQL_USER
           value: nextcloud
         name: nc
-        image: nextcloud
+        image: nextcloud:34.0.6-apache
         ports:
         - containerPort: 80
           protocol: TCP

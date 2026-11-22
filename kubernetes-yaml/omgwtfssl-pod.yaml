@@ -19,7 +19,9 @@ spec:
     - name: SSL_CERT
       value: /certs/<my-server-name>.crt
     name: omgwtfssl
-    image: paulczar/omgwtfssl
+    # Unmaintained since 2021 and amd64-only; pinned by digest because the
+    # only version tag (v0.1.0) is from 2018.
+    image: paulczar/omgwtfssl@sha256:b7b5b9360de8c772f705b7757772782c17a675289d8d1f40d119aae5cbdc917f
     terminationMessagePath: /dev/termination-log
     terminationMessagePolicy: File
     volumeMounts:

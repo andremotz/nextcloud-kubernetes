@@ -26,7 +26,10 @@ spec:
           value: nextcloud
         - name: MYSQL_ROOT_PASSWORD
           value: <someMySqlRootPass>
-        image: mariadb
+        # Run mariadb-upgrade automatically when the image version changes.
+        - name: MARIADB_AUTO_UPGRADE
+          value: "1"
+        image: mariadb:11.8.9
         name: db
         volumeMounts:
         - mountPath: /var/lib/mysql

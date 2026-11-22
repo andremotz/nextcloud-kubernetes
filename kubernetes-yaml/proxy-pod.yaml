@@ -12,7 +12,7 @@ spec:
       value: Europe/Berlin
 
     name: proxy
-    image: nginx
+    image: nginx:1.30.7
     ports:
     - containerPort: 80
       protocol: TCP
