@@ -7,6 +7,7 @@ These YAMLs can be used on a Kubernetes-cluster to set-up a Nextcloud using Mari
 
 ## Updates:
 * 2026-11-22: Pinned image versions, see "Image versions" below
+* 2026-11-22: Nextcloud now uses the environment variables of the official image (`NEXTCLOUD_TRUSTED_DOMAINS`, `OVERWRITEPROTOCOL`, `PHP_UPLOAD_LIMIT` and others). The old `NEXTCLOUD_URL` and `NEXTCLOUD_UPLOAD_MAX_FILESIZE` were ignored by the image. Trusted domains and proxy settings are written to `config.php` on first install; existing installs need to add them to `config/config.php` by hand.
 * 2019-12-02: Updated Deployments: added selector/matchLabels, changed apiVersion: apps/v1
 
 ## Image versions
@@ -73,7 +74,8 @@ Next, download Nextcloud-descriptions, adjust them and deploy:
 $ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/master/kubernetes-yaml/nc-deployment.yaml
 
 $ nano nc-deployment.yaml
---> change NEXTCLOUD_URL
+--> change NEXTCLOUD_TRUSTED_DOMAINS and OVERWRITECLIURL to your server's name (the same name you will use for SSL_SUBJECT below)
+--> change TRUSTED_PROXIES if your cluster's pod network is not 10.244.0.0/16
 --> change NEXTCLOUD_ADMIN_PASSWORD
 --> change MYSQL_PASSWORD (the value you've entered before)
 --> change html's hostPath (eg. to /home/andremotz/nc-deployment/nc-pv)
