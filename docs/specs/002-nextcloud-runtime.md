@@ -12,9 +12,10 @@ They appear to come from a different community image and are most likely
 ignored. The practical effect is that the public hostname is never
 registered as a trusted domain and the 4G upload limit is never applied.
 
-This must be confirmed against the image's current documentation
-(`docker-library/docs`, `nextcloud/README.md`) before implementation; the
-variable names below are the ones that documentation uses.
+Confirmed on 2026-11-22 against the image documentation
+(`docker-library/docs`, `nextcloud/README.md`): none of the four variables
+appears there. The variable names below are the documented ones, and were
+checked in a container run of `nextcloud:34.0.6-apache` (WI-02).
 
 ## Environment
 
@@ -29,6 +30,7 @@ variable names below are the ones that documentation uses.
 | `OVERWRITECLIURL` | overlay (`https://<hostname>`) | Correct links from background jobs |
 | `TRUSTED_PROXIES` | overlay (Pod CIDR) | So client IPs are taken from `X-Forwarded-For` |
 | `PHP_UPLOAD_LIMIT` | overlay, default `4G` | Replaces `NEXTCLOUD_UPLOAD_MAX_FILESIZE` |
+| `APACHE_BODY_LIMIT` | literal `"0"` | The image's Apache caps request bodies at 1 GiB by default; the ingress enforces the limit instead |
 | `PHP_MEMORY_LIMIT` | overlay, default `512M` | |
 | `TZ` | overlay | Was hard-coded to `Europe/Berlin` |
 

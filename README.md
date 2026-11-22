@@ -3,7 +3,7 @@ nextcloud for kubernetes
 
 For more background information check out my blog-post at https://www.andremotz.com/nextcloud-docker-on-kubernetes-cluster-ssl-certificates/ 
 
-These YAMLs can be used on a Kubernetes-cluster to set-up a Nextcloud using MariaDB and Nginx as a SSL/TLS-Proxy. The YAMLs were originally tested on Ubuntu 18.04 in 2018; the current versions have not yet been tested on a cluster (see `docs/backlog.md`).
+These YAMLs can be used on a Kubernetes-cluster to set-up a Nextcloud using MariaDB and Nginx as a SSL/TLS-Proxy. The YAMLs were originally tested on Ubuntu 18.04 in 2018; the current versions were tested in containers but not yet on a Kubernetes cluster (see `docs/backlog.md`).
 
 ## Updates:
 * 2026-11-22: Pinned image versions, see "Image versions" below
@@ -22,7 +22,7 @@ All images are pinned to explicit versions instead of `latest`:
 | `nginx` | `1.30.7` | Current stable branch |
 | `paulczar/omgwtfssl` | pinned by digest | Unmaintained since 2021, amd64 only |
 
-These versions are pinned but not yet tested together on a cluster.
+These versions were tested together in containers (podman, 2026-11-22: fresh install, login, 1.3 GB upload through the proxy), but not yet on a Kubernetes cluster.
 
 **If you already run an older install of this setup:** Nextcloud can only be upgraded one major version at a time. Check your current version (Settings → Administration → Overview) and step through each major version (e.g. `nextcloud:32-apache`, then `33-apache`, then `34.0.6-apache`) instead of jumping straight to the pinned version. Make a backup of the database and the `nc-pv` folder first. MariaDB upgrades its data files automatically on start (`MARIADB_AUTO_UPGRADE`), but it cannot downgrade them: if your running MariaDB is already newer than 11.8 (check with `kubectl exec deploy/db -- mariadb --version`), pin that version instead.
 

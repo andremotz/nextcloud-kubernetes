@@ -52,9 +52,10 @@ and cloud controllers). The exact annotation names must be taken from each
 controller's current documentation when the README is written, not from
 memory.
 
-The Apache-based Nextcloud image already handles the `.well-known` redirects
-through its `.htaccess`; this needs verifying behind the ingress, and only
-if it fails is a controller-level redirect added.
+The Nextcloud 34 admin manual states that Nextcloud's own `.well-known`
+redirects do not work behind a reverse proxy and that the proxy should do
+them, so the ingress must carry these redirects (the P0 `nginx.conf` already
+does).
 
 ## Out of scope
 

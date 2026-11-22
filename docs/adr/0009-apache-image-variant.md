@@ -36,5 +36,6 @@ Use the `-apache` variant explicitly in the image tag
   `www-data`, so the Pod cannot satisfy the `restricted` Pod Security
   Standard. The namespace is enforced at `baseline`
   ([spec 001](../specs/001-target-architecture.md)).
-- `.htaccess`-based behaviour (pretty URLs, `.well-known` redirects) works
-  out of the box.
+- `.htaccess`-based behaviour (pretty URLs) works out of the box. The
+  CalDAV/CardDAV `.well-known` redirects do not work behind a reverse proxy
+  (Nextcloud 34 admin manual) and must be done by the proxy or ingress.

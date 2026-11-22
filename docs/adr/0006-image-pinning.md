@@ -19,8 +19,10 @@ referenced without a tag, which means `latest`.
 ## Decision
 
 - Every image is pinned to an explicit version tag:
-  `nextcloud:<major>.<minor>.<patch>-apache` and `mariadb:<major>.<minor>`
-  (an LTS series listed as supported in the Nextcloud system requirements).
+  `nextcloud:<major>.<minor>.<patch>-apache` and
+  `mariadb:<major>.<minor>.<patch>` from an LTS series listed as supported in
+  the Nextcloud system requirements. Patch-level pins make every change a
+  reviewable commit; Renovate keeps them current.
 - Tags are set in one place (the Kustomize `images:` block).
 - Renovate (or Dependabot) opens pull requests for new tags. Nextcloud major
   bumps are never auto-merged and are grouped separately from patch bumps.
