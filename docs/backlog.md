@@ -1,6 +1,8 @@
 # Backlog
 
-Written 2026-11-22 against commit `0c6e488`. Priorities:
+Written 2026-11-22 against commit `0c6e488`. P0 implemented on branch
+`modernisation-plan` the same day; boxes are ticked only where the result
+was actually checked. Priorities:
 
 - **P0**: defects in the manifests as they are today; fixable without any
   architectural decision.
@@ -22,8 +24,8 @@ into the internet-facing nginx container. Nothing uses it. It gives the
 container root-equivalent control of the node, and with `type: Socket` the
 Pod cannot start on containerd-based clusters (Kubernetes ≥ 1.24).
 
-- [ ] Volume and volumeMount removed.
-- [ ] Pod starts on a containerd cluster.
+- [x] Volume and volumeMount removed.
+- [ ] Pod starts on a containerd cluster. *(not yet tested on a cluster)*
 
 ### WI-02 Use environment variables the official Nextcloud image understands
 
@@ -31,10 +33,12 @@ Pod cannot start on containerd-based clusters (Kubernetes ≥ 1.24).
 `NEXTCLOUD_UPLOAD_MAX_FILESIZE` and `NEXTCLOUD_MAX_FILE_UPLOADS`, which the
 official image does not document. See [spec 002](specs/002-nextcloud-runtime.md).
 
-- [ ] Variable list verified against the image's current README.
-- [ ] `NEXTCLOUD_TRUSTED_DOMAINS`, `OVERWRITEPROTOCOL`, `PHP_UPLOAD_LIMIT`
-      set; unknown variables removed.
-- [ ] Fresh install opens without the "untrusted domain" page.
+- [x] Variable list verified against the image's current README.
+- [x] `NEXTCLOUD_TRUSTED_DOMAINS`, `OVERWRITEPROTOCOL`, `PHP_UPLOAD_LIMIT`
+      set; unknown variables removed. Also `OVERWRITECLIURL`,
+      `TRUSTED_PROXIES` and `APACHE_BODY_LIMIT` (the image's own 1 GiB
+      request limit).
+- [ ] Fresh install opens without the "untrusted domain" page. *(not yet tested on a cluster)*
 
 ### WI-03 Fix the nginx proxy configuration
 
@@ -47,22 +51,27 @@ official image does not document. See [spec 002](specs/002-nextcloud-runtime.md)
 - No proxy timeouts, HSTS header, `ssl_protocols` or HTTP/2.
 - Line 43 is indented with a tab.
 
-- [ ] Directives added per the table in [spec 003](specs/003-ingress-and-tls.md).
-- [ ] 2 GB upload succeeds through the proxy.
+- [x] Directives added per the table in [spec 003](specs/003-ingress-and-tls.md).
+      Checked with `nginx -t` and a request test against a dummy upstream
+      in `nginx:1.30.7` (redirects, HSTS, HTTP/2, forwarded headers, 20 MB
+      upload).
+- [ ] 2 GB upload succeeds through the proxy to Nextcloud. *(not yet tested on a cluster)*
 
 ### WI-04 Fix the relative mount path in the omgwtfssl Pod
 
 `kubernetes-yaml/omgwtfssl-pod.yaml:26` has `mountPath: certs`; it must be
 `/certs` to match the `SSL_*` paths on lines 16-20.
 
-- [ ] Path corrected; certificate files appear in the host directory.
+- [x] Path corrected.
+- [ ] Certificate files appear in the host directory. *(not yet tested on a cluster)*
 
 ### WI-05 Pin image tags
 
 All four images are untagged (`latest`). See [ADR 0006](adr/0006-image-pinning.md).
 
-- [ ] Every `image:` has an explicit version tag.
-- [ ] README states which Nextcloud and MariaDB versions were tested.
+- [x] Every `image:` has an explicit version tag (omgwtfssl by digest; it
+      has no maintained tag).
+- [x] README states the pinned versions, marked as not yet cluster-tested.
 
 ### WI-06 Fix the README install instructions that no longer work
 
@@ -78,8 +87,9 @@ All four images are untagged (`latest`). See [ADR 0006](adr/0006-image-pinning.m
 
 Preferred fix is WI-16 (drop the walkthrough); until then:
 
-- [ ] Each command verified on a current LTS release or replaced by a link.
-- [ ] Line 101 split.
+- [x] Each command replaced by a link to the official guide; only the pod
+      CIDR and the (verified) `control-plane` taint remain inline.
+- [x] Line 101 split.
 
 ## P1: restructure
 

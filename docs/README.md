@@ -1,7 +1,8 @@
 # Project documentation
 
-Planning documents for modernising this repository. Everything here was written
-on 2026-11-22 against commit `0c6e488`; nothing in it is implemented yet.
+Planning documents for modernising this repository, written on 2026-11-22
+against commit `0c6e488`. The P0 work items are implemented; everything else
+is still a proposal. See [`backlog.md`](backlog.md) for what has been checked.
 
 | Area | Contents |
 | --- | --- |
