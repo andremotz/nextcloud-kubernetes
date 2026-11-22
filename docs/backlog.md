@@ -38,7 +38,10 @@ official image does not document. See [spec 002](specs/002-nextcloud-runtime.md)
       set; unknown variables removed. Also `OVERWRITECLIURL`,
       `TRUSTED_PROXIES` and `APACHE_BODY_LIMIT` (the image's own 1 GiB
       request limit).
-- [ ] Fresh install opens without the "untrusted domain" page. *(not yet tested on a cluster)*
+- [x] Fresh install opens without the "untrusted domain" page. *Verified in
+      containers (podman: pinned images, manifest env, real `nginx.conf`),
+      not on Kubernetes. `occ config:system:get` shows `trusted_domains`,
+      `overwriteprotocol`, `overwrite.cli.url` and `trusted_proxies` set.*
 
 ### WI-03 Fix the nginx proxy configuration
 
@@ -55,7 +58,9 @@ official image does not document. See [spec 002](specs/002-nextcloud-runtime.md)
       Checked with `nginx -t` and a request test against a dummy upstream
       in `nginx:1.30.7` (redirects, HSTS, HTTP/2, forwarded headers, 20 MB
       upload).
-- [ ] 2 GB upload succeeds through the proxy to Nextcloud. *(not yet tested on a cluster)*
+- [x] Upload above 1 GiB succeeds through the proxy to Nextcloud. *Verified
+      in containers: 1.3 GB WebDAV PUT returned 201 and the checksum matched
+      on download. Not yet on Kubernetes.*
 
 ### WI-04 Fix the relative mount path in the omgwtfssl Pod
 
@@ -63,7 +68,11 @@ official image does not document. See [spec 002](specs/002-nextcloud-runtime.md)
 `/certs` to match the `SSL_*` paths on lines 16-20.
 
 - [x] Path corrected.
-- [ ] Certificate files appear in the host directory. *(not yet tested on a cluster)*
+- [ ] Certificate files appear in the host directory. *(image run in a
+      container under amd64 emulation produced key, CSR and certificate in
+      `/certs`; not yet on a Kubernetes hostPath)*
+- [x] Certificate validity raised from the image default of 60 days to 365;
+      renewal documented in the README.
 
 ### WI-05 Pin image tags
 
@@ -92,6 +101,15 @@ Preferred fix is WI-16 (drop the walkthrough); until then:
 - [x] Line 101 split.
 
 ## P1: restructure
+
+### WI-47 Background jobs never run (P0 follow-up, found while testing)
+
+`occ setupchecks` on a fresh install reports that cron has never run: the
+manifests rely on AJAX cron. The fix (cron sidecar) is designed in spec 002
+and tracked under WI-13/WI-38; until then the README could tell users to set
+"Cron" and add a host cron entry, or accept AJAX cron.
+
+- [ ] Decide: interim README note, or wait for WI-13.
 
 ### WI-07 Decide the ADRs
 
