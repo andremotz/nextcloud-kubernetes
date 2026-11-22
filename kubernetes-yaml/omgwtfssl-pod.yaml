@@ -23,7 +23,7 @@ spec:
     terminationMessagePath: /dev/termination-log
     terminationMessagePolicy: File
     volumeMounts:
-    - mountPath: certs
+    - mountPath: /certs
       name: certs
   volumes:
     - name: certs
