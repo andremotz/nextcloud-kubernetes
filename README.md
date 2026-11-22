@@ -8,6 +8,8 @@ These YAMLs can be used on a Kubernetes-cluster to set-up a Nextcloud using Mari
 ## Updates:
 * 2026-11-22: Pinned image versions, see "Image versions" below
 * 2026-11-22: Nextcloud now uses the environment variables of the official image (`NEXTCLOUD_TRUSTED_DOMAINS`, `OVERWRITEPROTOCOL`, `PHP_UPLOAD_LIMIT` and others). The old `NEXTCLOUD_URL` and `NEXTCLOUD_UPLOAD_MAX_FILESIZE` were ignored by the image. The image applies trusted domains during installation only, so existing installs should check `trusted_domains`, `overwriteprotocol` and `trusted_proxies` in `config/config.php` and add them by hand if they are missing.
+* 2026-11-22: `nginx.conf` now allows uploads up to 4G, forwards `X-Forwarded-Proto`, sets HSTS and the CalDAV/CardDAV redirects; `proxy-pod.yaml` no longer mounts the Docker socket (it prevented the Pod from starting on current clusters). If you run an older copy, merge these changes into your edited files on the host.
+* 2026-11-22: Self-signed certificates are now valid for 365 days instead of the image default of 60.
 * 2019-12-02: Updated Deployments: added selector/matchLabels, changed apiVersion: apps/v1
 
 ## Image versions
@@ -92,6 +94,7 @@ $ nano omgwtfssl-pod.yaml
 
 $ kubectl create -f omgwtfssl-pod.yaml
 ```
+The certificate is valid for 365 days (`SSL_EXPIRE`) and is not renewed automatically. Before it expires, delete and re-create the Pod (`kubectl delete pod omgwtfssl && kubectl create -f omgwtfssl-pod.yaml`), then restart the proxy Pod.
 
 ## Deployment + Service: Nginx reverse Proxy
 One could already easily adjust the Nextcloud-service to publish HTTP-driven service. However we want to use a Nginx-instance in front of our Nextcloud to be able to use HTTPS-encryption. For the proxy we are not using a Deployment but a Pod, to be able to make use of standard HTTP/HTTPS-ports 80 & 443

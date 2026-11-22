@@ -18,6 +18,12 @@ spec:
       value: /certs/<my-server-name>.csr
     - name: SSL_CERT
       value: /certs/<my-server-name>.crt
+    # Validity in days. The image defaults to 60 and nothing renews the
+    # certificate, so re-run this Pod and restart the proxy before expiry.
+    - name: SSL_EXPIRE
+      value: "365"
+    - name: CA_EXPIRE
+      value: "365"
     name: omgwtfssl
     # Unmaintained since 2021 and amd64-only; pinned by digest because the
     # only version tag (v0.1.0) is from 2018.
