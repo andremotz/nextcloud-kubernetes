@@ -48,7 +48,7 @@ As a user (not root) create a folder nc-deployment, download pre-defined MariaDB
 ```
 $ mkdir nc-deployment
 $ cd nc-deployment
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/master/kubernetes-yaml/db-deployment.yaml
+$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/db-deployment.yaml
 
 $ nano db-deployment.yaml
 --> change MYSQL_PASSWORD here
@@ -57,14 +57,14 @@ $ nano db-deployment.yaml
 
 $ kubectl create -f db-deployment.yaml
 
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/master/kubernetes-yaml/db-svc.yaml
+$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/db-svc.yaml
 $ kubectl create -f db-svc.yaml
 ```
 
 ## Deployment + Service: Nextcloud:
 Next, download Nextcloud-descriptions, adjust them and deploy:
 ```
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/master/kubernetes-yaml/nc-deployment.yaml
+$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/nc-deployment.yaml
 
 $ nano nc-deployment.yaml
 --> change NEXTCLOUD_TRUSTED_DOMAINS and OVERWRITECLIURL to your server's name (the same name you will use for SSL_SUBJECT below)
@@ -75,14 +75,14 @@ $ nano nc-deployment.yaml
 
 $ kubectl create -f nc-deployment.yaml
 
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/master/kubernetes-yaml/nc-svc.yaml
+$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/nc-svc.yaml
 $ kubectl create -f nc-svc.yaml
 ```
 
 ## Create self-signed certificates
 The [OMGWTFSSL-Docker image](https://hub.docker.com/r/paulczar/omgwtfssl/) offers easy-to-use certificate-creation. Here we are using only a Pod, not a Deployment. Once the certificates are created, the Pod will stop.
 ```
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/master/kubernetes-yaml/omgwtfssl-pod.yaml
+$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/omgwtfssl-pod.yaml
 
 $ nano omgwtfssl-pod.yaml
 --> change SSL_SUBJECT to your server's name
@@ -99,7 +99,7 @@ The certificate is valid for 365 days (`SSL_EXPIRE`) and is not renewed automati
 ## Deployment + Service: Nginx reverse Proxy
 One could already easily adjust the Nextcloud-service to publish HTTP-driven service. However we want to use a Nginx-instance in front of our Nextcloud to be able to use HTTPS-encryption. For the proxy we are not using a Deployment but a Pod, to be able to make use of standard HTTP/HTTPS-ports 80 & 443
 ```
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/master/kubernetes-yaml/nginx.conf
+$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/nginx.conf
 
 $ nano nginx.conf
 --> change server_name (two locations in the file!) to the server name you've provided before for SSL_SUBJECT
@@ -107,7 +107,7 @@ $ nano nginx.conf
 --> change ssl_certificate_key to the filename you've provide before for SSL_KEY
 --> if you changed PHP_UPLOAD_LIMIT in nc-deployment.yaml, change client_max_body_size to the same value
 
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/master/kubernetes-yaml/proxy-pod.yaml
+$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/proxy-pod.yaml
 
 $ nano proxy-pod.yaml
 --> change cert's hostPath to the location you have provided before
