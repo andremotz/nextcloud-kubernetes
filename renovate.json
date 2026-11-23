@@ -1,0 +1,19 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "packageRules": [
+    {
+      "description": "Nextcloud supports only one major upgrade at a time and needs a backup first; never batch or auto-merge majors.",
+      "matchPackageNames": ["nextcloud"],
+      "matchUpdateTypes": ["major"],
+      "dependencyDashboardApproval": true,
+      "automerge": false
+    },
+    {
+      "description": "MariaDB series must be supported by the running Nextcloud version.",
+      "matchPackageNames": ["mariadb"],
+      "matchUpdateTypes": ["major", "minor"],
+      "dependencyDashboardApproval": true
+    }
+  ]
+}

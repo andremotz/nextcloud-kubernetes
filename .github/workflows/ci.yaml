@@ -1,0 +1,81 @@
+# Same checks as `make lint`, `make validate` and `make deploy smoke`.
+# Third-party actions are pinned by commit SHA (docs/specs/006-repository-security.md).
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  KUBECONFORM_VERSION: v0.8.0
+  KUBECONFORM_SHA256: 9bc2bffbf71f261128533edaf912153948b7ff238f9a531ae6d34466ec287883
+  KUBE_LINTER_VERSION: v0.8.3
+  KUBE_LINTER_SHA256: 1a6d8419b11971372971fdbc22682b684ebfb7cf1c39591662d1b6ca736c41df
+  YAMLLINT_VERSION: 1.38.0
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.13"
+      - run: pip install "yamllint==${YAMLLINT_VERSION}"
+      - run: yamllint .
+      - uses: DavidAnson/markdownlint-cli2-action@3ce8f712b5d8f31acd8e201be6d97e3d2bb23eb7  # v25.1.0
+
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install kubeconform and kube-linter
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/bin"
+          curl -fsSL -o kubeconform.tgz \
+            "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "${KUBECONFORM_SHA256}  kubeconform.tgz" | sha256sum -c -
+          tar -xzf kubeconform.tgz -C "$HOME/bin" kubeconform
+          curl -fsSL -o kube-linter.tgz \
+            "https://github.com/stackrox/kube-linter/releases/download/${KUBE_LINTER_VERSION}/kube-linter-linux.tar.gz"
+          echo "${KUBE_LINTER_SHA256}  kube-linter.tgz" | sha256sum -c -
+          tar -xzf kube-linter.tgz -C "$HOME/bin" kube-linter
+          echo "$HOME/bin" >> "$GITHUB_PATH"
+      - run: make validate
+
+  smoke:
+    needs: [lint, validate]
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Kubernetes minor versions supported upstream (ADR 0011).
+        node_image:
+          - kindest/node:v1.35.8
+          - kindest/node:v1.36.4
+          - kindest/node:v1.37.0
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: helm/kind-action@ea822c7bf1874f08e5a491df991c228edffc3376  # v1.15.2
+        with:
+          version: v0.33.0
+          node_image: ${{ matrix.node_image }}
+          cluster_name: nextcloud-dev
+      - run: make deploy
+      - run: make smoke
