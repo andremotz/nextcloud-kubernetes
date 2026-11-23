@@ -1,0 +1,24 @@
+# Default kube-linter checks plus the ones that guard this project's decisions
+# (no hostPath or host sockets, no latest tags, probes and resources present).
+checks:
+  include:
+    - docker-sock
+    - host-ipc
+    - host-network
+    - host-pid
+    - latest-tag
+    - no-liveness-probe
+    - no-readiness-probe
+    - privilege-escalation-container
+    - privileged-container
+    - sensitive-host-mounts
+    - unset-memory-requirements
+    - writable-host-mount
+  exclude:
+    # The Apache image starts as root and drops to www-data (ADR 0009).
+    - run-as-non-root
+    - no-read-only-root-fs
+    # Single replica by design (ADR 0001).
+    - no-anti-affinity
+    # CPU limits cause throttling; requests and memory limits are set.
+    - unset-cpu-requirements

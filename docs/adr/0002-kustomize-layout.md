@@ -15,7 +15,7 @@ committed are not valid input for `kubectl apply` or for any linter.
 
 Restructure the manifests as a Kustomize base with an example overlay:
 
-```
+```text
 base/                  # valid, placeholder-free manifests
   kustomization.yaml
   namespace.yaml

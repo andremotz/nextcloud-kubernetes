@@ -12,7 +12,7 @@ values file from this repository.
 
 ## Layout
 
-```
+```text
 helm/
   README.md               # install, upgrade, how it maps to the manifests path
   values.yaml             # curated values for a real install (ingress + TLS)
