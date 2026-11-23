@@ -1,0 +1,9 @@
+# Real credentials; copy secrets.env.example to secrets.env
+overlays/*/secrets.env
+
+# Editor and OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+.render/

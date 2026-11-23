@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nextcloud
+  labels:
+    # The Apache-based Nextcloud image starts as root and drops to www-data,
+    # which rules out "restricted"; see docs/adr/0009-apache-image-variant.md.
+    pod-security.kubernetes.io/enforce: baseline
+    pod-security.kubernetes.io/warn: restricted
+    pod-security.kubernetes.io/audit: restricted
