@@ -37,7 +37,7 @@ lint:
 # overlays/example reads a git-ignored secrets.env; render it with the
 # committed example file so validation works on a fresh checkout.
 render:
-	@mkdir -p $(RENDER_DIR)
+	@rm -rf $(RENDER_DIR) && mkdir -p $(RENDER_DIR)
 	@created=""; \
 	for ex in overlays/*/secrets.env.example; do \
 	  [ -f "$${ex%.example}" ] || { cp "$$ex" "$${ex%.example}"; created="$$created $${ex%.example}"; }; \
