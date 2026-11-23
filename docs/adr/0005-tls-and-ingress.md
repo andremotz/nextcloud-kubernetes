@@ -1,6 +1,6 @@
 # ADR 0005: Ingress + cert-manager replace the proxy Pod and omgwtfssl
 
-- Status: Proposed
+- Status: Accepted (2026-11-23). Ingress is the default; Gateway API stays a later overlay (WI-19).
 - Date: 2026-11-22
 
 ## Context

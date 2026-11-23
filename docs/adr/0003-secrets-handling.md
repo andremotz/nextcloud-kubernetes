@@ -1,6 +1,6 @@
 # ADR 0003: Credentials in a Kubernetes Secret, never in Git
 
-- Status: Proposed
+- Status: Accepted (2026-11-23; implemented on branch `p1-restructure`)
 - Date: 2026-11-22
 
 ## Context

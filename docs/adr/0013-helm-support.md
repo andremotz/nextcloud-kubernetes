@@ -1,6 +1,6 @@
 # ADR 0013: Helm support through the official chart, not a chart of our own
 
-- Status: Proposed
+- Status: Accepted (2026-11-23; implemented on branch `p1-restructure`)
 - Date: 2026-11-22
 - Amends: [ADR 0001](0001-project-scope.md)
 
@@ -74,7 +74,21 @@ Helm chart" to "no Helm chart of our own".
   restore, not an in-place change, because resource names and volume layout
   differ. The operations runbook must say so.
 
-## To verify before accepting
+## Verified 2026-11-23 (WI-37)
+
+- Chart 9.4.5 (app version 35.0.3), released 2026-11-17. There were twelve
+  releases between July and November 2026, the repository is active, and it
+  had 135 open issues.
+- MariaDB, PostgreSQL and Redis still come from Bitnami subcharts
+  (`oci://registry-1.docker.io/bitnamicharts`). The Helm path therefore uses
+  the external-database option (spec 007, option B) with `base/mariadb`.
+- The chart supports a separate data PVC
+  (`persistence.nextcloudData`), a cron sidecar (`cronjob.type: sidecar`),
+  an existing Secret for admin and database credentials, hooks, a startup
+  probe and extra init containers. Every parity row is covered; the
+  differences are listed in `helm/README.md`.
+
+## Originally listed to verify
 
 - **How the official chart currently provides its database and Redis.** It
   has historically pulled these in as Bitnami subcharts, and Bitnami

@@ -1,6 +1,6 @@
 # ADR 0007: Run MariaDB as a StatefulSet
 
-- Status: Proposed
+- Status: Accepted (2026-11-23), with one change: no `--log-bin`, see below.
 - Date: 2026-11-22
 
 ## Context
@@ -21,7 +21,11 @@ binary logging.
 - The Service is renamed from `db` to `mariadb`, and Nextcloud's
   `MYSQL_HOST` follows.
 - Container args: `--transaction-isolation=READ-COMMITTED`,
-  `--binlog-format=ROW`, `--log-bin=binlog`.
+  `--binlog-format=ROW`.
+  - *Amended during implementation:* `--log-bin` was dropped. Without an
+    expiry setting the binary log grows without bound on a small volume,
+    and nothing here (no replication, no point-in-time recovery) uses it.
+    `--binlog-format=ROW` is kept so that enabling the log later is safe.
 - Readiness and liveness probes use the image's bundled `healthcheck.sh`.
 - `MARIADB_AUTO_UPGRADE=1` is set so minor/major image bumps run
   `mariadb-upgrade` automatically.

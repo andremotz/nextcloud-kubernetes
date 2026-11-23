@@ -1,7 +1,8 @@
 # ADR 0004: PersistentVolumeClaims instead of hostPath
 
-- Status: Proposed
+- Status: Accepted (2026-11-23; implemented on branch `p1-restructure`)
 - Date: 2026-11-22
+- Amended by: [ADR 0010](0010-separate-data-volume.md) (user data on its own claim)
 
 ## Context
 

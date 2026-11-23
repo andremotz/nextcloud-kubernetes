@@ -6,6 +6,17 @@ This is a learning resource and a starting point for homelabs and single-node cl
 
 > **Coming from the 2018 blog post?** The original single-file layout (hostPath volumes, nginx proxy Pod, omgwtfssl) is preserved at the [`v1-legacy`](https://github.com/andremotz/nextcloud-kubernetes/tree/v1-legacy) tag. See [Migrating from v1-legacy](#migrating-from-v1-legacy) below. Background: [the original blog post](https://www.andremotz.com/nextcloud-docker-on-kubernetes-cluster-ssl-certificates/).
 
+## Which path
+
+| You want to | Use |
+| --- | --- |
+| Understand what a Nextcloud deployment consists of | Manifests (`base/`, `overlays/`) |
+| Try it on a laptop in a few minutes | [Quick start](#quick-start-local-about-two-minutes) below, or the local variant in [`helm/`](helm/README.md) |
+| Run it and get upgrades from a maintained chart | [Helm path](helm/README.md): the official chart with this repo's values |
+| Manage it with Argo CD or Flux | Either; both are declarative |
+
+Both paths produce the same architecture and pass the same smoke test.
+
 ## What you get
 
 ```mermaid
@@ -34,8 +45,9 @@ flowchart LR
 | MariaDB | 11.8.9 |
 | Traefik (example overlay) | 3.7.19, Helm chart 42.4.2 |
 | cert-manager (example overlay) | 1.21.3 |
+| Official Nextcloud chart (Helm path) | 9.4.5 |
 
-Last verified 2026-11-23. Other conformant clusters should work; only the combination above is tested. Image versions are set in one place, [`base/kustomization.yaml`](base/kustomization.yaml).
+Last verified 2026-11-23. **Kubernetes 1.33 or newer is required** (native sidecar containers); the CI workflow is set up to test 1.35, 1.36 and 1.37. Other conformant clusters should work; only the combination above is tested. Image versions are set in [`base/nextcloud/kustomization.yaml`](base/nextcloud/kustomization.yaml) and [`base/mariadb/kustomization.yaml`](base/mariadb/kustomization.yaml); the Helm values must use the same Nextcloud tag (`make validate` checks this).
 
 ## Quick start (local, about two minutes)
 
@@ -114,14 +126,14 @@ Nextcloud needs a few things from whatever sits in front of it. They are control
 | `overlays/example/secrets.env` | Database and admin credentials (git-ignored) |
 | `overlays/example/kustomization.yaml` | Size of the user-data volume, controller component |
 | `overlays/example/ingress.yaml` | Certificate issuer, `ingressClassName` |
-| `base/kustomization.yaml` | Image versions |
+| `base/nextcloud/kustomization.yaml`, `base/mariadb/kustomization.yaml` | Image versions |
 | `base/*/` | Everything else: probes, resources, security settings |
 
 ## Operating it
 
 - **Upgrades:**
   - Back up first.
-  - Change the Nextcloud tag in `base/kustomization.yaml` and apply. The container runs the upgrade on start.
+  - Change the Nextcloud tag in `base/nextcloud/kustomization.yaml` (and in `helm/values*.yaml`) and apply. The container runs the upgrade on start.
   - Nextcloud can only be upgraded **one major version at a time**.
   - MariaDB upgrades its data files automatically (`MARIADB_AUTO_UPGRADE`), but cannot downgrade them.
 - **Background jobs** run every five minutes in the `cron` sidecar. A fresh install switches Nextcloud to "Cron" mode automatically.

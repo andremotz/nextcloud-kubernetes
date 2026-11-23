@@ -1,8 +1,9 @@
 # Project documentation
 
 Planning documents for modernising this repository, written on 2026-11-22
-against commit `0c6e488`. The P0 work items are implemented; everything else
-is still a proposal. See [`backlog.md`](backlog.md) for what has been checked.
+against commit `0c6e488`. P0 and P1 are implemented (P1 on 2026-11-23); P2
+and P3 are still proposals. See [`backlog.md`](backlog.md) for what has been
+checked and how.
 
 | Area | Contents |
 | --- | --- |
@@ -12,24 +13,24 @@ is still a proposal. See [`backlog.md`](backlog.md) for what has been checked.
 
 ## ADRs
 
-All ADRs are **Proposed** until the maintainer accepts them.
+ADRs 0001–0014 were accepted on 2026-11-23, when P1 was implemented. Deviations are recorded in the ADRs themselves.
 
 | # | Decision | Status |
 | --- | --- | --- |
-| [0001](adr/0001-project-scope.md) | Stay a minimal, readable reference; do not compete with the Helm chart | Proposed |
-| [0002](adr/0002-kustomize-layout.md) | Kustomize base + example overlay instead of hand-edited files | Proposed |
-| [0003](adr/0003-secrets-handling.md) | Credentials live in a Kubernetes Secret that is never committed | Proposed |
-| [0004](adr/0004-persistent-storage.md) | PersistentVolumeClaims instead of `hostPath` | Proposed |
-| [0005](adr/0005-tls-and-ingress.md) | Ingress + cert-manager replace the proxy Pod and omgwtfssl | Proposed |
-| [0006](adr/0006-image-pinning.md) | Pin every image tag; automate bumps | Proposed |
-| [0007](adr/0007-mariadb-statefulset.md) | Run MariaDB as a StatefulSet | Proposed |
-| [0008](adr/0008-ci-validation.md) | Validate manifests in CI | Proposed |
-| [0009](adr/0009-apache-image-variant.md) | Use the Apache variant of the Nextcloud image | Proposed |
-| [0010](adr/0010-separate-data-volume.md) | Keep user data on its own volume (amends 0004) | Proposed |
-| [0011](adr/0011-versioning-and-support-policy.md) | Semantic version tags and a tested-versions table | Proposed |
-| [0012](adr/0012-local-quickstart-overlay.md) | A quickstart overlay with no prerequisites (amends 0002) | Proposed |
-| [0013](adr/0013-helm-support.md) | Helm support through the official chart, not a chart of our own (amends 0001) | Proposed |
-| [0014](adr/0014-modern-pod-features.md) | Use current Pod features; state a minimum Kubernetes version | Proposed |
+| [0001](adr/0001-project-scope.md) | Stay a minimal, readable reference; do not compete with the Helm chart | Accepted |
+| [0002](adr/0002-kustomize-layout.md) | Kustomize base + example overlay instead of hand-edited files | Accepted |
+| [0003](adr/0003-secrets-handling.md) | Credentials live in a Kubernetes Secret that is never committed | Accepted |
+| [0004](adr/0004-persistent-storage.md) | PersistentVolumeClaims instead of `hostPath` | Accepted |
+| [0005](adr/0005-tls-and-ingress.md) | Ingress + cert-manager replace the proxy Pod and omgwtfssl | Accepted |
+| [0006](adr/0006-image-pinning.md) | Pin every image tag; automate bumps | Accepted |
+| [0007](adr/0007-mariadb-statefulset.md) | Run MariaDB as a StatefulSet | Accepted |
+| [0008](adr/0008-ci-validation.md) | Validate manifests in CI | Accepted |
+| [0009](adr/0009-apache-image-variant.md) | Use the Apache variant of the Nextcloud image | Accepted |
+| [0010](adr/0010-separate-data-volume.md) | Keep user data on its own volume (amends 0004) | Accepted |
+| [0011](adr/0011-versioning-and-support-policy.md) | Semantic version tags and a tested-versions table | Accepted |
+| [0012](adr/0012-local-quickstart-overlay.md) | A quickstart overlay with no prerequisites (amends 0002) | Accepted |
+| [0013](adr/0013-helm-support.md) | Helm support through the official chart, not a chart of our own (amends 0001) | Accepted |
+| [0014](adr/0014-modern-pod-features.md) | Use current Pod features; state a minimum Kubernetes version | Accepted |
 
 ## Specs
 

@@ -1,6 +1,6 @@
 # ADR 0012: A quickstart overlay with no prerequisites
 
-- Status: Proposed
+- Status: Accepted (2026-11-23; implemented on branch `p1-restructure`)
 - Date: 2026-11-22
 - Amends: [ADR 0002](0002-kustomize-layout.md)
 

@@ -1,19 +1,79 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "extends": [
+    "config:recommended",
+    "helpers:pinGitHubActionDigests"
+  ],
   "packageRules": [
     {
       "description": "Nextcloud supports only one major upgrade at a time and needs a backup first; never batch or auto-merge majors.",
-      "matchPackageNames": ["nextcloud"],
-      "matchUpdateTypes": ["major"],
+      "matchPackageNames": [
+        "nextcloud"
+      ],
+      "matchUpdateTypes": [
+        "major"
+      ],
       "dependencyDashboardApproval": true,
       "automerge": false
     },
     {
       "description": "MariaDB series must be supported by the running Nextcloud version.",
-      "matchPackageNames": ["mariadb"],
-      "matchUpdateTypes": ["major", "minor"],
+      "matchPackageNames": [
+        "mariadb"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor"
+      ],
       "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Chart upgrades must keep parity with the manifests path; review the chart changelog.",
+      "matchDatasources": [
+        "helm"
+      ],
+      "matchPackageNames": [
+        "nextcloud"
+      ],
+      "automerge": false
+    },
+    {
+      "description": "Each CI matrix entry stays on its Kubernetes minor; only patch bumps. New minors are added by hand (WI-45).",
+      "matchPackageNames": [
+        "kindest/node"
+      ],
+      "matchUpdateTypes": [
+        "major",
+        "minor"
+      ],
+      "enabled": false
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Official Nextcloud chart version used by the Helm path",
+      "managerFilePatterns": [
+        "/^helm/CHART_VERSION$/"
+      ],
+      "matchStrings": [
+        "^(?<currentValue>\\S+)\\s*$"
+      ],
+      "depNameTemplate": "nextcloud",
+      "datasourceTemplate": "helm",
+      "registryUrlTemplate": "https://nextcloud.github.io/helm/"
+    },
+    {
+      "customType": "regex",
+      "description": "kind node images in the CI matrix",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/ci\\.yaml$/"
+      ],
+      "matchStrings": [
+        "kindest/node:(?<currentValue>v[0-9.]+)"
+      ],
+      "depNameTemplate": "kindest/node",
+      "datasourceTemplate": "docker"
     }
   ]
 }
