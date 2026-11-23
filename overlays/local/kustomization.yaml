@@ -14,6 +14,7 @@ secretGenerator:
   - name: nextcloud-credentials
     namespace: nextcloud
     literals:
+      - mariadb-user=nextcloud
       - mariadb-password=local-db-password
       - mariadb-root-password=local-db-root-password
       - nextcloud-admin-user=admin

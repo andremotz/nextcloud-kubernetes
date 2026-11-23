@@ -9,22 +9,6 @@ labels:
     includeSelectors: false
 
 resources:
-  - namespace.yaml
-  - mariadb/statefulset.yaml
-  - mariadb/service.yaml
-  - nextcloud/pvc.yaml
-  - nextcloud/deployment.yaml
-  - nextcloud/service.yaml
-
-configMapGenerator:
-  - name: nextcloud-post-install
-    files:
-      - nextcloud/hooks/10-background-jobs.sh
-
-# The only place image versions are set. Nextcloud can only be upgraded one
-# major version at a time; see docs/specs/004-operations.md.
-images:
-  - name: nextcloud
-    newTag: 34.0.6-apache
-  - name: mariadb
-    newTag: 11.8.9
+  - namespace
+  - mariadb
+  - nextcloud

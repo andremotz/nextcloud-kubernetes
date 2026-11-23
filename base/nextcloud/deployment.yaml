@@ -82,7 +82,10 @@ spec:
             - name: MYSQL_DATABASE
               value: nextcloud
             - name: MYSQL_USER
-              value: nextcloud
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-credentials
+                  key: mariadb-user
             - name: MYSQL_PASSWORD
               valueFrom:
                 secretKeyRef:

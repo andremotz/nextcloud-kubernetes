@@ -9,6 +9,7 @@
 #   DB_WORKLOAD   database workload              (default: statefulset/mariadb)
 #   ADMIN_USER / ADMIN_PASSWORD                  (default: local overlay values)
 #   LOCAL_PORT    port for kubectl port-forward  (default: 18080)
+#   SERVICE_PORT  port of the Nextcloud Service  (default: 80)
 set -euo pipefail
 
 NAMESPACE=${NAMESPACE:-nextcloud}
@@ -18,6 +19,7 @@ DB_WORKLOAD=${DB_WORKLOAD:-statefulset/mariadb}
 ADMIN_USER=${ADMIN_USER:-admin}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-local-admin-password}
 LOCAL_PORT=${LOCAL_PORT:-18080}
+SERVICE_PORT=${SERVICE_PORT:-80}
 
 k() { kubectl -n "$NAMESPACE" "$@"; }
 step() { printf '\n==> %s\n' "$*"; }
@@ -45,7 +47,7 @@ trap diagnose ERR
 
 port_forward() {
   [ -n "$pf_pid" ] && kill "$pf_pid" 2>/dev/null || true
-  k port-forward "svc/$SERVICE" "$LOCAL_PORT:80" >/dev/null 2>&1 &
+  k port-forward "svc/$SERVICE" "$LOCAL_PORT:$SERVICE_PORT" >/dev/null 2>&1 &
   pf_pid=$!
   disown "$pf_pid" 2>/dev/null || true
   for _ in $(seq 1 30); do
