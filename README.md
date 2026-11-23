@@ -1,121 +1,176 @@
 # Nextcloud on Kubernetes
-nextcloud for kubernetes
 
-For more background information check out my blog-post at https://www.andremotz.com/nextcloud-docker-on-kubernetes-cluster-ssl-certificates/ 
+Plain Kubernetes manifests for running [Nextcloud](https://nextcloud.com/) with MariaDB on a small cluster, written to be read and understood in one sitting. Kustomize (built into `kubectl`) is the only tool you need.
 
-These YAMLs can be used on a Kubernetes-cluster to set-up a Nextcloud using MariaDB and Nginx as a SSL/TLS-Proxy. The YAMLs were originally tested on Ubuntu 18.04 in 2018; the current versions were tested in containers but not yet on a Kubernetes cluster (see `docs/backlog.md`).
+This is a learning resource and a starting point for homelabs and single-node clusters. For production or high availability, use the official [Nextcloud Helm chart](https://github.com/nextcloud/helm).
 
-## Updates:
-* 2026-11-22: Pinned image versions, see "Image versions" below
-* 2026-11-22: Nextcloud now uses the environment variables of the official image (`NEXTCLOUD_TRUSTED_DOMAINS`, `OVERWRITEPROTOCOL`, `PHP_UPLOAD_LIMIT` and others). The old `NEXTCLOUD_URL` and `NEXTCLOUD_UPLOAD_MAX_FILESIZE` were ignored by the image. The image applies trusted domains during installation only, so existing installs should check `trusted_domains`, `overwriteprotocol` and `trusted_proxies` in `config/config.php` and add them by hand if they are missing.
-* 2026-11-22: `nginx.conf` now allows uploads up to 4G, forwards `X-Forwarded-Proto`, sets HSTS and the CalDAV/CardDAV redirects; `proxy-pod.yaml` no longer mounts the Docker socket (it prevented the Pod from starting on current clusters). If you run an older copy, merge these changes into your edited files on the host.
-* 2026-11-22: Self-signed certificates are now valid for 365 days instead of the image default of 60.
-* 2019-12-02: Updated Deployments: added selector/matchLabels, changed apiVersion: apps/v1
+> **Coming from the 2018 blog post?** The original single-file layout (hostPath volumes, nginx proxy Pod, omgwtfssl) is preserved at the [`v1-legacy`](https://github.com/andremotz/nextcloud-kubernetes/tree/v1-legacy) tag. See [Migrating from v1-legacy](#migrating-from-v1-legacy) below. Background: [the original blog post](https://www.andremotz.com/nextcloud-docker-on-kubernetes-cluster-ssl-certificates/).
 
-## Image versions
-All images are pinned to explicit versions instead of `latest`:
+## What you get
 
-| Image | Version | Note |
-| --- | --- | --- |
-| `nextcloud` | `34.0.6-apache` | Current `stable` release line |
-| `mariadb` | `11.8.9` | Recommended by the Nextcloud 34 system requirements |
-| `nginx` | `1.30.7` | Current stable branch |
-| `paulczar/omgwtfssl` | pinned by digest | Unmaintained since 2021, amd64 only |
-
-These versions were tested together in containers (podman, 2026-11-22: fresh install, login, 1.3 GB upload through the proxy), but not yet on a Kubernetes cluster.
-
-**If you already run an older install of this setup:** Nextcloud can only be upgraded one major version at a time. Check your current version (Settings → Administration → Overview) and step through each major version (e.g. `nextcloud:32-apache`, then `33-apache`, then `34.0.6-apache`) instead of jumping straight to the pinned version. Make a backup of the database and the `nc-pv` folder first. MariaDB upgrades its data files automatically on start (`MARIADB_AUTO_UPGRADE`), but it cannot downgrade them: if your running MariaDB is already newer than 11.8 (check with `kubectl exec deploy/db -- mariadb --version`), pin that version instead.
-
-## Prerequisites:
-* A single-node Kubernetes cluster. All data is stored in folders on that node (`hostPath`), so these YAMLs do not work across several nodes.
-* Basic Docker & Kubernetes knowledge
-
-The original 2018 walkthrough (Ubuntu 18.04, Docker, `apt.kubernetes.io`) no longer works: the package repository was shut down and Kubernetes dropped direct Docker support in 1.24. Set up a cluster with the official guides instead:
-
-1. Install a container runtime (containerd is the usual choice): https://kubernetes.io/docs/setup/production-environment/container-runtimes/
-2. Install kubeadm, kubelet and kubectl: https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/install-kubeadm/
-3. Create the cluster with `kubeadm init --pod-network-cidr=10.244.0.0/16`, following https://kubernetes.io/docs/setup/production-environment/tools/kubeadm/create-cluster-kubeadm/
-4. Install the Flannel pod network: https://github.com/flannel-io/flannel
-5. Allow normal Pods on the single node: `kubectl taint nodes --all node-role.kubernetes.io/control-plane-`
-
-If you use a different pod network range, change `TRUSTED_PROXIES` in `nc-deployment.yaml` accordingly. A lighter alternative for a single machine is k3s (https://docs.k3s.io/quick-start); it ships its own Traefik ingress on ports 80/443, which would conflict with the nginx proxy Pod below unless disabled.
-
-**Extra-hint:** Use the following in an extra-terminal to be able to see what the Kubernetes-cluster is doing
-`$ watch -n 10 kubectl get deployment,svc,pods,pvc,pv,ing`
-
-## Deployment + Service: MariaDB
-As a user (not root) create a folder nc-deployment, download pre-defined MariaDB-descriptions, adjust it to your needs and deploy:
-```
-$ mkdir nc-deployment
-$ cd nc-deployment
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/db-deployment.yaml
-
-$ nano db-deployment.yaml
---> change MYSQL_PASSWORD here
---> change MYSQL_ROOT_PASSWORD here
---> change db's HostPath here, which should be the absolute location of 'nc-deployment'/db-pv (eg /home/andremotz/nc-deployment/db-pv)
-
-$ kubectl create -f db-deployment.yaml
-
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/db-svc.yaml
-$ kubectl create -f db-svc.yaml
+```mermaid
+flowchart LR
+  client([Browser / clients]) -- HTTPS --> ing[Ingress controller<br/>+ cert-manager]
+  ing -- HTTP --> svc[Service nextcloud]
+  svc --> nc[Pod nextcloud<br/>Apache + cron sidecar]
+  nc --> db[(StatefulSet mariadb)]
+  nc --- app[(PVC nextcloud-app)]
+  nc --- data[(PVC nextcloud-data)]
 ```
 
-## Deployment + Service: Nextcloud:
-Next, download Nextcloud-descriptions, adjust them and deploy:
+- Nextcloud (Apache image) as a single-replica Deployment, with a cron sidecar for background jobs
+- MariaDB as a StatefulSet with the settings Nextcloud recommends
+- Application and user data on separate PersistentVolumeClaims
+- Credentials in a Kubernetes Secret that is never committed
+- Probes, resource requests, dropped capabilities, Pod Security `baseline`
+- TLS through your ingress controller and cert-manager
+
+## Tested versions
+
+| Component | Version |
+| --- | --- |
+| Kubernetes | 1.37 (kind) |
+| Nextcloud | 34.0.6 (`nextcloud:34.0.6-apache`) |
+| MariaDB | 11.8.9 |
+| Traefik (example overlay) | 3.7.19, Helm chart 42.4.2 |
+| cert-manager (example overlay) | 1.21.3 |
+
+Last verified 2026-11-23. Other conformant clusters should work; only the combination above is tested. Image versions are set in one place, [`base/kustomization.yaml`](base/kustomization.yaml).
+
+## Quick start (local, about two minutes)
+
+Needs a cluster with a default StorageClass, such as [kind](https://kind.sigs.k8s.io/), minikube or k3s.
+
+```sh
+git clone https://github.com/andremotz/nextcloud-kubernetes.git
+cd nextcloud-kubernetes
+kubectl apply --server-side -k overlays/local
+kubectl -n nextcloud rollout status deployment/nextcloud --timeout=10m
+kubectl -n nextcloud port-forward svc/nextcloud 8080:80
 ```
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/nc-deployment.yaml
 
-$ nano nc-deployment.yaml
---> change NEXTCLOUD_TRUSTED_DOMAINS and OVERWRITECLIURL to your server's name (the same name you will use for SSL_SUBJECT below)
---> change TRUSTED_PROXIES if your cluster's pod network is not 10.244.0.0/16
---> change NEXTCLOUD_ADMIN_PASSWORD
---> change MYSQL_PASSWORD (the value you've entered before)
---> change html's hostPath (eg. to /home/andremotz/nc-deployment/nc-pv)
+Open <http://localhost:8080> and log in as `admin` / `local-admin-password`.
 
-$ kubectl create -f nc-deployment.yaml
+The local overlay has fake, committed credentials and no TLS. Never expose it beyond your machine.
 
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/nc-svc.yaml
-$ kubectl create -f nc-svc.yaml
+## Real install
+
+### Prerequisites
+
+- A Kubernetes cluster with a **default StorageClass**. Bare kubeadm clusters have none; [local-path-provisioner](https://github.com/rancher/local-path-provisioner) is the simplest option on a single node (k3s ships it).
+- An **ingress controller**. k3s ships Traefik.
+- **cert-manager** ([installation](https://cert-manager.io/docs/installation/helm/)).
+- For a trusted certificate: a public DNS name pointing at the cluster and port 80 reachable from the internet.
+
+### Steps
+
+1. Credentials:
+
+   ```sh
+   cp overlays/example/secrets.env.example overlays/example/secrets.env
+   ```
+
+   Fill in every value in `secrets.env` (it is git-ignored), for example with `openssl rand -base64 24`.
+
+2. Settings: edit [`overlays/example/settings.env`](overlays/example/settings.env). Set your hostname (`NEXTCLOUD_TRUSTED_DOMAINS` and `OVERWRITECLIURL`) and your cluster's pod network (`TRUSTED_PROXIES`).
+
+3. Certificate: the example uses a self-signed certificate. For Let's Encrypt, put your e-mail address into [`issuer-letsencrypt.yaml`](overlays/example/issuer-letsencrypt.yaml) and change the `cert-manager.io/cluster-issuer` annotation in [`ingress.yaml`](overlays/example/ingress.yaml) to `letsencrypt`.
+
+4. Ingress controller: apply the settings below for your controller.
+
+5. Deploy:
+
+   ```sh
+   kubectl apply --server-side -k overlays/example
+   kubectl -n nextcloud rollout status deployment/nextcloud --timeout=10m
+   ```
+
+The first start copies Nextcloud into the volume and installs it, which takes a few minutes.
+
+### Ingress controller settings
+
+Nextcloud needs a few things from whatever sits in front of it. They are controller-specific, so they are not in the base.
+
+| Requirement | Why |
+| --- | --- |
+| Request body limit at least `PHP_UPLOAD_LIMIT` (4G), or none | Larger uploads fail otherwise |
+| Read timeout of about an hour | Large uploads are aborted otherwise |
+| HTTP redirected to HTTPS | |
+| HSTS header | Nextcloud's security check asks for it |
+| `/.well-known/caldav` and `/.well-known/carddav` redirected to `https://<host>/remote.php/dav/` | Calendar and contacts auto-discovery. Nextcloud's own redirect points to `http://` behind a proxy |
+
+**Traefik** (tested, and the k3s default):
+
+- Install or upgrade Traefik with [`examples/traefik-values.yaml`](examples/traefik-values.yaml). It sets a 3600 s read timeout and the HTTP→HTTPS redirect. With Traefik's default 60 s timeout, a 1.3 GB upload failed with 502. On k3s, put the same `ports` settings into a [`HelmChartConfig`](https://docs.k3s.io/helm) for the bundled Traefik.
+- Uncomment the `components` block in [`overlays/example/kustomization.yaml`](overlays/example/kustomization.yaml). This adds HSTS and the `.well-known` redirects.
+
+**Other controllers:** configure the requirements in the table above using your controller's documentation. Contributions of tested components are welcome.
+
+## Configuration
+
+| Where | What |
+| --- | --- |
+| `overlays/example/settings.env` | Hostname, HTTPS overwrite, trusted proxies, upload limit, time zone |
+| `overlays/example/secrets.env` | Database and admin credentials (git-ignored) |
+| `overlays/example/kustomization.yaml` | Size of the user-data volume, controller component |
+| `overlays/example/ingress.yaml` | Certificate issuer, `ingressClassName` |
+| `base/kustomization.yaml` | Image versions |
+| `base/*/` | Everything else: probes, resources, security settings |
+
+## Operating it
+
+- **Upgrades:**
+  - Back up first.
+  - Change the Nextcloud tag in `base/kustomization.yaml` and apply. The container runs the upgrade on start.
+  - Nextcloud can only be upgraded **one major version at a time**.
+  - MariaDB upgrades its data files automatically (`MARIADB_AUTO_UPGRADE`), but cannot downgrade them.
+- **Background jobs** run every five minutes in the `cron` sidecar. A fresh install switches Nextcloud to "Cron" mode automatically.
+- **Backups:** dump the database and copy both Nextcloud volumes, with maintenance mode on. See [spec 004](docs/specs/004-operations.md).
+- **Changing the database password** in `secrets.env` does not change it inside an existing database. See spec 004 before rotating it.
+- **Deleting the `nextcloud` namespace deletes the volumes and all data** with the usual `Delete` reclaim policy.
+- **Secrets** are only base64-encoded in etcd unless your cluster [encrypts them at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).
+- **Uninstall:** `kubectl delete -k overlays/example`. This also removes the cluster-wide issuers; delete the namespace to remove the volumes.
+
+### Before you expose it to the internet
+
+- [ ] Real certificate (Let's Encrypt issuer)
+- [ ] Strong, unique values in `secrets.env`
+- [ ] Two-factor authentication enabled for the admin account
+- [ ] Ingress controller settings applied, and the admin overview (Administration settings → Overview) shows no warnings
+- [ ] A backup that you have restored at least once
+
+## Migrating from v1-legacy
+
+The old manifests stored data in host folders (`db-pv`, `nc-pv`). In outline:
+
+1. Enable maintenance mode and dump the database.
+2. Delete the old Deployments, Services and Pods. The host folders stay.
+3. Apply the new overlay with the **same** database credentials and a Nextcloud tag of the **same major version** you were running.
+4. Scale Nextcloud to 0. Copy `nc-pv` into the `nextcloud-app` volume, with its `data/` folder going into `nextcloud-data`. Import the dump into `mariadb-0`.
+5. Scale to 1, disable maintenance mode, verify, and only then remove the host folders.
+
+This procedure has not yet been tested end to end. Details are tracked in [spec 004](docs/specs/004-operations.md).
+
+## Development
+
+```sh
+make lint       # yamllint, markdownlint
+make validate   # render every overlay; kubeconform and kube-linter
+make test       # lint, validate, create a kind cluster, deploy overlays/local, smoke test
+make clean      # delete the kind cluster
 ```
 
-## Create self-signed certificates
-The [OMGWTFSSL-Docker image](https://hub.docker.com/r/paulczar/omgwtfssl/) offers easy-to-use certificate-creation. Here we are using only a Pod, not a Deployment. Once the certificates are created, the Pod will stop.
-```
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/omgwtfssl-pod.yaml
+The smoke test ([`hack/smoke-test.sh`](hack/smoke-test.sh)) checks:
 
-$ nano omgwtfssl-pod.yaml
---> change SSL_SUBJECT to your server's name
---> change CA_SUBJECT to your mail-adress
---> change SSL_KEY to a proper filename
---> change SSL_CSR to a proper filename
---> change SSL_CERT to a proper filename
---> change cert's hostPath (eg. to /home/andremotz/nc-deployment/certs-pv)
+- install status
+- WebDAV login
+- an upload and download
+- cron mode
+- that data survives deleting the Pod
+- `occ check`
 
-$ kubectl create -f omgwtfssl-pod.yaml
-```
-The certificate is valid for 365 days (`SSL_EXPIRE`) and is not renewed automatically. Before it expires, delete and re-create the Pod (`kubectl delete pod omgwtfssl && kubectl create -f omgwtfssl-pod.yaml`), then restart the proxy Pod.
+Design decisions, specs and the backlog are in [`docs/`](docs/README.md). Changes are listed in [`CHANGELOG.md`](CHANGELOG.md).
 
-## Deployment + Service: Nginx reverse Proxy
-One could already easily adjust the Nextcloud-service to publish HTTP-driven service. However we want to use a Nginx-instance in front of our Nextcloud to be able to use HTTPS-encryption. For the proxy we are not using a Deployment but a Pod, to be able to make use of standard HTTP/HTTPS-ports 80 & 443
-```
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/nginx.conf
+## License
 
-$ nano nginx.conf
---> change server_name (two locations in the file!) to the server name you've provided before for SSL_SUBJECT
---> change ssl_certificate to the filename you've provide before for SSL_CERT
---> change ssl_certificate_key to the filename you've provide before for SSL_KEY
---> if you changed PHP_UPLOAD_LIMIT in nc-deployment.yaml, change client_max_body_size to the same value
-
-$ wget https://raw.githubusercontent.com/andremotz/nextcloud-kubernetes/v1-legacy/kubernetes-yaml/proxy-pod.yaml
-
-$ nano proxy-pod.yaml
---> change cert's hostPath to the location you have provided before
---> change nginx-config's hostpath to the location where you've stored nginx.conf before (eg. /home/andremotz/nc-deployment/nginx.conf)
---> change nginx-logs' hostpath to a proper location
-
-$ kubectl create -f proxy-pod.yaml
-```
-Now you should be able to point your browser to https://<yourserver> and see a new Nextcloud-instance, running on a super-hyper nextlevel-Kubernetes cluster, that you could use for further cool stuff 😉
-  
-That’s it!! 😉
+GPL-3.0, see [LICENSE](LICENSE).
