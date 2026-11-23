@@ -12,7 +12,7 @@ spec:
       value: Europe/Berlin
 
     name: proxy
-    image: nginx
+    image: nginx:1.30.7
     ports:
     - containerPort: 80
       protocol: TCP
@@ -26,8 +26,6 @@ spec:
     volumeMounts:
     - mountPath: /etc/nginx/certs
       name: certs
-    - mountPath: /tmp/docker.sock
-      name: docker-socket
     - mountPath: /etc/nginx/nginx.conf
       name: nginx-config
     - mountPath: /var/log/nginx
@@ -37,10 +35,6 @@ spec:
     - name: certs
       hostPath:
         path: "/home/<someFolderLocation>/certs-pv"
-    - name: docker-socket
-      hostPath:
-        path: "/var/run/docker.sock"
-        type: Socket
     - name: nginx-config
       hostPath:
         path: "/home/<someFolderLocation>/nginx.conf"

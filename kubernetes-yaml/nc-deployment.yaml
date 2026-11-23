@@ -20,19 +20,32 @@ spec:
       - env:
         - name: TZ
           value: Europe/Berlin
-        - name: DEBUG
-          value: "false"
-        - name: NEXTCLOUD_URL
-          value: http://<someDomain>
         - name: NEXTCLOUD_ADMIN_USER
           value: admin
         - name: NEXTCLOUD_ADMIN_PASSWORD
           value: <someNextCloudAdminPass>
-        - name: NEXTCLOUD_UPLOAD_MAX_FILESIZE
+        # Hostname users type into the browser (same as SSL_SUBJECT and
+        # server_name). Space-separated if there is more than one.
+        - name: NEXTCLOUD_TRUSTED_DOMAINS
+          value: <my-server-name>
+
+        # TLS ends at the nginx proxy; tell Nextcloud the public URL is https.
+        - name: OVERWRITEPROTOCOL
+          value: https
+        - name: OVERWRITECLIURL
+          value: https://<my-server-name>
+        # Pod network of the cluster (the --pod-network-cidr given to
+        # kubeadm init), so the client IP is taken from X-Forwarded-For.
+        - name: TRUSTED_PROXIES
+          value: 10.244.0.0/16
+
+        # Maximum upload size. nginx.conf limits the request size, so Apache
+        # does not need a limit of its own (its default is 1 GiB).
+        - name: PHP_UPLOAD_LIMIT
           value: 4G
-        - name: NEXTCLOUD_MAX_FILE_UPLOADS
-          value: "20"
-          
+        - name: APACHE_BODY_LIMIT
+          value: "0"
+
         - name: MYSQL_DATABASE
           value: nextcloud
         - name: MYSQL_HOST
@@ -42,7 +55,7 @@ spec:
         - name: MYSQL_USER
           value: nextcloud
         name: nc
-        image: nextcloud
+        image: nextcloud:34.0.6-apache
         ports:
         - containerPort: 80
           protocol: TCP
