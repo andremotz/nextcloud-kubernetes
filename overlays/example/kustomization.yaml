@@ -11,9 +11,10 @@ kind: Kustomization
 resources:
   - ../../base
   - ingress.yaml
-  # Pick one issuer and set its name in ingress.yaml.
   - issuer-selfsigned.yaml
-  - issuer-letsencrypt.yaml
+  # For a trusted certificate: set your e-mail address in this file,
+  # uncomment it, and set "nextcloud-letsencrypt" in ingress.yaml.
+  # - issuer-letsencrypt.yaml
 
 # Controller-specific additions (HSTS, /.well-known redirects). Uncomment the
 # one for your ingress controller; see README "Ingress controller settings".

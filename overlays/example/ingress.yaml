@@ -7,7 +7,7 @@ metadata:
     app.kubernetes.io/name: nextcloud
     app.kubernetes.io/component: app
   annotations:
-    # nextcloud-selfsigned or letsencrypt, see the issuer files.
+    # nextcloud-selfsigned or nextcloud-letsencrypt, see the issuer files.
     cert-manager.io/cluster-issuer: nextcloud-selfsigned
     # Upload size, timeouts, HSTS and the /.well-known/caldav|carddav
     # redirects are controller-specific; see "Ingress controller settings"

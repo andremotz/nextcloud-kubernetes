@@ -143,7 +143,8 @@ and tracked under WI-13/WI-38; until then the README could tell users to set
 ### WI-11 PersistentVolumeClaims (ADR 0004)
 
 - [x] No `hostPath` anywhere.
-- [x] Data survives Pod deletion on a k3s or kind cluster. *(verified on kind, Kubernetes 1.37)*
+- [x] Data survives Pod deletion on a k3s or kind cluster, for both the
+      Nextcloud Pod and `mariadb-0`. *(verified on kind, Kubernetes 1.37)*
 
 ### WI-12 MariaDB StatefulSet (ADR 0007)
 
@@ -270,8 +271,9 @@ priority is given per item.
 
 - [x] Targets from spec 005 exist; CI calls them.
 - [x] `hack/smoke-test.sh` covers login, upload, Pod deletion and re-read.
-- [x] Failure output includes events and container logs. *(Seen once, when
-      the probes returned 400.)*
+- [x] Failure output includes events and container logs. *(Checked by
+      running the smoke test with a wrong admin password; needed `set -E` so
+      the ERR trap also fires inside functions.)*
 
 ### WI-28 Upgrade test in CI (P2, spec 005)
 
@@ -427,6 +429,18 @@ This is research, and it comes before any Helm work.
       Kustomize overlay and the Helm values.
 - [ ] README note on where the Secret comes from in a GitOps setup
       (it cannot come from the git-ignored `secrets.env`).
+
+### WI-48 Renovate and the Nextcloud tag in several files (P2)
+
+The Nextcloud tag lives in `base/nextcloud/kustomization.yaml` and twice in
+each Helm values file (`image.tag`, the init container image). `make
+check-tags` fails if they differ. Whether Renovate updates all of them in
+one pull request is not verified; `image.tag` without `image.repository`
+is probably not detected by its helm-values manager.
+
+- [ ] Run Renovate once (or its dry-run mode) and check what it detects.
+- [ ] If needed: set `image.repository` explicitly and group all Nextcloud
+      image updates into one pull request.
 
 ### WI-45 Recurring: review when upstream drops a Kubernetes version (P3)
 

@@ -86,7 +86,10 @@ The local overlay has fake, committed credentials and no TLS. Never expose it be
 
 2. Settings: edit [`overlays/example/settings.env`](overlays/example/settings.env). Set your hostname (`NEXTCLOUD_TRUSTED_DOMAINS` and `OVERWRITECLIURL`) and your cluster's pod network (`TRUSTED_PROXIES`).
 
-3. Certificate: the example uses a self-signed certificate. For Let's Encrypt, put your e-mail address into [`issuer-letsencrypt.yaml`](overlays/example/issuer-letsencrypt.yaml) and change the `cert-manager.io/cluster-issuer` annotation in [`ingress.yaml`](overlays/example/ingress.yaml) to `letsencrypt`.
+3. Certificate: the example uses a self-signed certificate. For Let's Encrypt:
+   - put your e-mail address into [`issuer-letsencrypt.yaml`](overlays/example/issuer-letsencrypt.yaml)
+   - uncomment that file in [`kustomization.yaml`](overlays/example/kustomization.yaml)
+   - change the `cert-manager.io/cluster-issuer` annotation in [`ingress.yaml`](overlays/example/ingress.yaml) to `nextcloud-letsencrypt`
 
 4. Ingress controller: apply the settings below for your controller.
 
@@ -141,7 +144,7 @@ Nextcloud needs a few things from whatever sits in front of it. They are control
 - **Changing the database password** in `secrets.env` does not change it inside an existing database. See spec 004 before rotating it.
 - **Deleting the `nextcloud` namespace deletes the volumes and all data** with the usual `Delete` reclaim policy.
 - **Secrets** are only base64-encoded in etcd unless your cluster [encrypts them at rest](https://kubernetes.io/docs/tasks/administer-cluster/encrypt-data/).
-- **Uninstall:** `kubectl delete -k overlays/example`. This also removes the cluster-wide issuers; delete the namespace to remove the volumes.
+- **Uninstall:** `kubectl delete -k overlays/example` removes everything, **including the `nextcloud` namespace and with it both volumes and all data**, and the overlay's cluster-wide issuer. Back up first.
 
 ### Before you expose it to the internet
 

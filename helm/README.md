@@ -22,7 +22,7 @@ Prerequisites are the same as for the manifests path: a default StorageClass, an
 
 1. Copy `helm/database-example/secrets.env.example` to `secrets.env` in the same folder. That file is git-ignored. Fill in every value.
 2. In `helm/values.yaml`, replace every `cloud.example.com` and set `TRUSTED_PROXIES` to your pod network.
-3. Apply a certificate issuer, for example `kubectl apply -f overlays/example/issuer-selfsigned.yaml`, or the Let's Encrypt one after setting its e-mail address.
+3. Apply a certificate issuer, for example `kubectl apply -f overlays/example/issuer-selfsigned.yaml`, or `overlays/example/issuer-letsencrypt.yaml` after setting its e-mail address; then set the issuer name in `ingress.annotations`.
 4. Apply the controller settings from "Ingress controller settings" in the main README. For Traefik, apply `components/traefik/middlewares.yaml` and add the `traefik.ingress.kubernetes.io/router.middlewares` annotation from `components/traefik/kustomization.yaml` to `ingress.annotations`.
 5. Install:
 

@@ -25,7 +25,7 @@
 | File | Issuer | Use |
 | --- | --- | --- |
 | `issuer-selfsigned.yaml` | `selfSigned` ClusterIssuer | Offline and lab use; replaces omgwtfssl |
-| `issuer-letsencrypt.yaml` | ACME HTTP-01, production endpoint | Needs an e-mail address in the overlay |
+| `issuer-letsencrypt.yaml` (`nextcloud-letsencrypt`, commented out by default) | ACME HTTP-01, production endpoint | Needs an e-mail address in the overlay |
 
 The example overlay enables the self-signed issuer by default so that the
 install works without public DNS; switching is a one-line change.

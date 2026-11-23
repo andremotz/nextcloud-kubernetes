@@ -1,16 +1,17 @@
 # Let's Encrypt via HTTP-01. Needs a public DNS name pointing at the cluster
 # and port 80 reachable from the internet. Set your e-mail address, then
-# switch the annotation in ingress.yaml to "letsencrypt".
+# switch the annotation in ingress.yaml to "nextcloud-letsencrypt" and
+# uncomment this file in kustomization.yaml.
 apiVersion: cert-manager.io/v1
 kind: ClusterIssuer
 metadata:
-  name: letsencrypt
+  name: nextcloud-letsencrypt
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
     email: admin@example.com
     privateKeySecretRef:
-      name: letsencrypt-account-key
+      name: nextcloud-letsencrypt-account-key
     solvers:
       - http01:
           ingress: {}

@@ -53,7 +53,10 @@ render:
 # The Helm path renders the official chart with this repo's values files.
 render-helm:
 	@mkdir -p $(RENDER_DIR)
-	@cp helm/database-example/secrets.env.example helm/database-example/secrets.env; \
+	@created=""; \
+	if [ ! -f helm/database-example/secrets.env ]; then \
+	  cp helm/database-example/secrets.env.example helm/database-example/secrets.env; created=1; \
+	fi; \
 	rc=0; \
 	for v in values values-local; do \
 	  helm template nextcloud nextcloud --repo $(CHART_REPO) --version $(CHART_VERSION) \
@@ -62,7 +65,7 @@ render-helm:
 	for d in database-local database-example; do \
 	  kubectl kustomize helm/$$d > $(RENDER_DIR)/helm-$$d.yaml && echo "rendered helm/$$d" || rc=1; \
 	done; \
-	rm helm/database-example/secrets.env; exit $$rc
+	[ -z "$$created" ] || rm helm/database-example/secrets.env; exit $$rc
 
 # Both paths must run the same Nextcloud version.
 check-tags:

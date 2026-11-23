@@ -10,7 +10,7 @@
 #   ADMIN_USER / ADMIN_PASSWORD                  (default: local overlay values)
 #   LOCAL_PORT    port for kubectl port-forward  (default: 18080)
 #   SERVICE_PORT  port of the Nextcloud Service  (default: 80)
-set -euo pipefail
+set -Eeuo pipefail
 
 NAMESPACE=${NAMESPACE:-nextcloud}
 SERVICE=${SERVICE:-nextcloud}
