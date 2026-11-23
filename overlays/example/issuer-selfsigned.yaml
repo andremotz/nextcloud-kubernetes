@@ -1,0 +1,8 @@
+# Self-signed certificates: works without public DNS. Browsers and the
+# Nextcloud clients will warn until you trust the certificate.
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: nextcloud-selfsigned
+spec:
+  selfSigned: {}

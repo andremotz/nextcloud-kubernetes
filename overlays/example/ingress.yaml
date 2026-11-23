@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nextcloud
+  namespace: nextcloud
+  labels:
+    app.kubernetes.io/name: nextcloud
+    app.kubernetes.io/component: app
+  annotations:
+    # nextcloud-selfsigned or letsencrypt, see the issuer files.
+    cert-manager.io/cluster-issuer: nextcloud-selfsigned
+    # Upload size, timeouts, HSTS and the /.well-known/caldav|carddav
+    # redirects are controller-specific; see "Ingress controller settings"
+    # in the README.
+spec:
+  # Uncomment if your cluster has more than one ingress controller.
+  # ingressClassName: traefik
+  tls:
+    - hosts:
+        - HOSTNAME  # replaced from settings.env
+      secretName: nextcloud-tls
+  rules:
+    - host: HOSTNAME  # replaced from settings.env
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: nextcloud
+                port:
+                  name: http
