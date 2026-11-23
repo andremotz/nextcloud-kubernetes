@@ -12,7 +12,8 @@ K8S_VERSION ?= 1.37.0
 CRD_SCHEMAS ?= https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/{{.Group}}/{{.ResourceKind}}_{{.ResourceAPIVersion}}.json
 
 RENDER_DIR := .render
-OVERLAYS   := $(notdir $(wildcard overlays/*))
+# Every overlay, plus render-only kustomizations that exercise components.
+TARGETS    := $(wildcard overlays/*) $(wildcard hack/validate/*)
 
 .PHONY: help lint validate render cluster deploy smoke test clean
 
@@ -33,16 +34,17 @@ lint:
 # committed example file so validation works on a fresh checkout.
 render:
 	@mkdir -p $(RENDER_DIR)
-	@for o in $(OVERLAYS); do \
-	  created=""; \
-	  if [ -f overlays/$$o/secrets.env.example ] && [ ! -f overlays/$$o/secrets.env ]; then \
-	    cp overlays/$$o/secrets.env.example overlays/$$o/secrets.env; created=1; \
-	  fi; \
-	  kubectl kustomize overlays/$$o > $(RENDER_DIR)/$$o.yaml; rc=$$?; \
-	  [ -n "$$created" ] && rm overlays/$$o/secrets.env; \
-	  [ $$rc -eq 0 ] || exit $$rc; \
-	  echo "rendered overlays/$$o"; \
-	done
+	@created=""; \
+	for ex in overlays/*/secrets.env.example; do \
+	  [ -f "$${ex%.example}" ] || { cp "$$ex" "$${ex%.example}"; created="$$created $${ex%.example}"; }; \
+	done; \
+	rc=0; \
+	for t in $(TARGETS); do \
+	  name=$$(echo $$t | tr / -); \
+	  if kubectl kustomize $$t > $(RENDER_DIR)/$$name.yaml; then echo "rendered $$t"; else rc=1; fi; \
+	done; \
+	[ -z "$$created" ] || rm $$created; \
+	exit $$rc
 
 validate: render
 	kubeconform -strict -summary -kubernetes-version $(K8S_VERSION) \

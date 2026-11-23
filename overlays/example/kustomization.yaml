@@ -15,6 +15,11 @@ resources:
   - issuer-selfsigned.yaml
   - issuer-letsencrypt.yaml
 
+# Controller-specific additions (HSTS, /.well-known redirects). Uncomment the
+# one for your ingress controller; see README "Ingress controller settings".
+# components:
+#   - ../../components/traefik
+
 secretGenerator:
   - name: nextcloud-credentials
     namespace: nextcloud
