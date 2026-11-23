@@ -1,0 +1,19 @@
+# Namespace, Secret and MariaDB for helm/values.yaml.
+#   cp secrets.env.example secrets.env   # git-ignored; fill in every value
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: nextcloud
+
+resources:
+  - ../../base/namespace
+  - ../../base/mariadb
+
+# The chart references the Secret by a fixed name.
+generatorOptions:
+  disableNameSuffixHash: true
+
+secretGenerator:
+  - name: nextcloud-credentials
+    envs:
+      - secrets.env

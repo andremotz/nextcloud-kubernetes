@@ -1,0 +1,135 @@
+# Official Nextcloud chart (version in helm/CHART_VERSION) for a real install:
+# counterpart of overlays/example. Needs an ingress controller and
+# cert-manager; see helm/README.md. Only values that differ from the chart
+# defaults are set. Change every cloud.example.com.
+
+# The chart's cron sidecar is a regular container without probes (busybox
+# crond has nothing to probe); tell kube-linter that this is intended.
+deploymentAnnotations:
+  ignore-check.kube-linter.io/no-liveness-probe: "cron sidecar of the official chart"
+  ignore-check.kube-linter.io/no-readiness-probe: "cron sidecar of the official chart"
+
+image:
+  # Same tag as base/nextcloud/kustomization.yaml (checked by make validate).
+  tag: 34.0.6-apache
+
+nextcloud:
+  # Public hostname; also the Host header for the probes.
+  host: cloud.example.com
+  existingSecret:
+    enabled: true
+    secretName: nextcloud-credentials
+    usernameKey: nextcloud-admin-user
+    passwordKey: nextcloud-admin-password
+  extraEnv:
+    - name: PHP_UPLOAD_LIMIT
+      value: 4G
+    # The proxy in front limits request size; Apache's default is 1 GiB.
+    - name: APACHE_BODY_LIMIT
+      value: "0"
+    # TLS ends at the ingress controller.
+    - name: OVERWRITEPROTOCOL
+      value: https
+    - name: OVERWRITECLIURL
+      value: https://cloud.example.com
+    # Pod network range, so X-Forwarded-For from the ingress is trusted.
+    - name: TRUSTED_PROXIES
+      value: 10.244.0.0/16
+    - name: TZ
+      value: Europe/Berlin
+  # Same as the data-permissions init container in base/nextcloud: a fresh
+  # volume (possibly with lost+found) must belong to www-data.
+  extraInitContainers:
+    - name: data-permissions
+      image: docker.io/library/nextcloud:34.0.6-apache
+      command: [sh, -c, "chown 33:33 /var/www/html/data && chmod 0770 /var/www/html/data"]
+      resources:
+        requests:
+          cpu: 10m
+          memory: 16Mi
+        limits:
+          memory: 64Mi
+      securityContext:
+        allowPrivilegeEscalation: false
+        capabilities:
+          drop: [ALL]
+          add: [CHOWN, FOWNER]
+      volumeMounts:
+        - name: nextcloud-data
+          mountPath: /var/www/html/data
+  # Same post-installation step as base/nextcloud/hooks.
+  hooks:
+    post-installation: |-
+      #!/bin/sh
+      set -eu
+      php /var/www/html/occ background:cron
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: [ALL]
+      add: [CHOWN, DAC_OVERRIDE, FOWNER, KILL, NET_BIND_SERVICE, SETGID, SETUID]
+  podSecurityContext:
+    seccompProfile:
+      type: RuntimeDefault
+
+# MariaDB from helm/database-example, not the chart's Bitnami subchart.
+internalDatabase:
+  enabled: false
+externalDatabase:
+  enabled: true
+  type: mysql
+  host: mariadb
+  database: nextcloud
+  existingSecret:
+    enabled: true
+    secretName: nextcloud-credentials
+    usernameKey: mariadb-user
+    passwordKey: mariadb-password
+
+cronjob:
+  enabled: true
+  type: sidecar
+  sidecar:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        memory: 512Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop: [ALL]
+        add: [SETUID, SETGID]
+
+ingress:
+  enabled: true
+  # className: traefik
+  annotations:
+    cert-manager.io/cluster-issuer: nextcloud-selfsigned
+    # Controller-specific settings (upload size, timeouts, HSTS,
+    # .well-known redirects): see "Ingress controller settings" in README.md.
+  tls:
+    - secretName: nextcloud-tls
+      hosts:
+        - cloud.example.com
+
+persistence:
+  enabled: true
+  size: 5Gi
+  nextcloudData:
+    enabled: true
+    size: 20Gi
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    memory: 1Gi
+
+# First start copies the application into the volume; allow ten minutes.
+startupProbe:
+  enabled: true
+  initialDelaySeconds: 0
+  failureThreshold: 60

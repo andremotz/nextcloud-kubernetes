@@ -21,6 +21,7 @@ env:
   KUBE_LINTER_VERSION: v0.8.3
   KUBE_LINTER_SHA256: 1a6d8419b11971372971fdbc22682b684ebfb7cf1c39591662d1b6ca736c41df
   YAMLLINT_VERSION: 1.38.0
+  HELM_VERSION: v4.3.2
 
 jobs:
   lint:
@@ -42,6 +43,9 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           persist-credentials: false
+      - uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e  # v5.1.0
+        with:
+          version: ${{ env.HELM_VERSION }}
       - name: Install kubeconform and kube-linter
         run: |
           set -euo pipefail
@@ -68,6 +72,11 @@ jobs:
           - kindest/node:v1.35.8
           - kindest/node:v1.36.4
           - kindest/node:v1.37.0
+        path: [manifests]
+        include:
+          # Helm path (official chart + helm/values-local.yaml), newest only.
+          - node_image: kindest/node:v1.37.0
+            path: helm
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -77,5 +86,11 @@ jobs:
           version: v0.33.0
           node_image: ${{ matrix.node_image }}
           cluster_name: nextcloud-dev
-      - run: make deploy
-      - run: make smoke
+      - if: matrix.path == 'helm'
+        uses: azure/setup-helm@2f5e7bc67f1f9972ab16657bb795f36d8f04de0e  # v5.1.0
+        with:
+          version: ${{ env.HELM_VERSION }}
+      - if: matrix.path == 'manifests'
+        run: make deploy smoke
+      - if: matrix.path == 'helm'
+        run: make deploy-helm smoke-helm

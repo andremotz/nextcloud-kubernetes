@@ -7,3 +7,6 @@ overlays/*/secrets.env
 .vscode/
 *.swp
 .render/
+
+# Helm path credentials
+helm/database-example/secrets.env

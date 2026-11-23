@@ -1,0 +1,23 @@
+# Namespace, Secret and MariaDB for helm/values-local.yaml.
+# Same fake credentials as overlays/local; never expose beyond localhost.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: nextcloud
+
+resources:
+  - ../../base/namespace
+  - ../../base/mariadb
+
+# The chart references the Secret by a fixed name.
+generatorOptions:
+  disableNameSuffixHash: true
+
+secretGenerator:
+  - name: nextcloud-credentials
+    literals:
+      - mariadb-user=nextcloud
+      - mariadb-password=local-db-password
+      - mariadb-root-password=local-db-root-password
+      - nextcloud-admin-user=admin
+      - nextcloud-admin-password=local-admin-password
