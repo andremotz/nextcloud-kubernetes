@@ -1,6 +1,6 @@
 # ADR 0008: Validate manifests in CI
 
-- Status: Accepted (2026-11-23). Workflow written; it has not run on GitHub yet.
+- Status: Accepted (2026-11-23). First run passed on PR #5 (2026-11-24).
 - Date: 2026-11-22
 
 ## Context

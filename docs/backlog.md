@@ -175,10 +175,10 @@ and tracked under WI-13/WI-38; until then the README could tell users to set
 
 ### WI-15 CI (ADR 0008)
 
-- [x] yamllint, kubeconform, kube-linter, markdownlint. *(Locally via
-      `make lint validate`; the workflow has not run on GitHub yet.)*
+- [x] yamllint, kubeconform, kube-linter, markdownlint. *(Locally and in
+      CI; first run passed on PR #5.)*
 - [x] kind smoke test asserting `"installed":true` from `/status.php`.
-      *(Locally; CI matrix 1.35/1.36/1.37 plus Helm not yet run.)*
+      *(Locally and in CI on 1.35, 1.36, 1.37 plus the Helm path.)*
 - [ ] Workflow required on pull requests *(repository setting; for the
       maintainer)*.
 
