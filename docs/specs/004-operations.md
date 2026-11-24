@@ -20,8 +20,11 @@ Procedure (manual runbook first, automation optional):
 1. `occ maintenance:mode --on`
 2. `mariadb-dump --single-transaction nextcloud` from the `mariadb-0` Pod
    to a file outside the cluster.
-3. Copy or snapshot the Nextcloud volume (CSI `VolumeSnapshot` where the
-   storage driver supports it, otherwise `tar` through `kubectl exec`).
+3. Copy or snapshot both Nextcloud volumes, `nextcloud-app` (with
+   `config/`) and `nextcloud-data` (user files), using CSI `VolumeSnapshot`
+   where the storage driver supports it and `tar` through `kubectl exec`
+   otherwise. On the Helm path the claims are named `nextcloud-nextcloud`
+   and `nextcloud-nextcloud-data`.
 4. `occ maintenance:mode --off`
 
 Optional follow-up (WI-17): a `CronJob` that performs the database dump
@@ -30,7 +33,7 @@ nightly into a separate PVC with a retention count.
 ## Restore
 
 1. Scale the Nextcloud Deployment to 0.
-2. Restore the volume contents.
+2. Restore the contents of both volumes.
 3. Drop and recreate the database, import the dump.
 4. Scale to 1, then `occ maintenance:data-fingerprint`.
 
@@ -68,8 +71,9 @@ For users of the current `hostPath` manifests:
    in place.
 3. Apply the new overlay with the **same** database credentials and a
    Nextcloud image tag of the **same major version** that was running.
-4. Scale Nextcloud to 0, copy the old `nc-pv` contents into the new PVC and
-   import the dump into `mariadb-0`.
+4. Scale Nextcloud to 0. Copy the old `nc-pv` contents into
+   `nextcloud-app`, with `nc-pv/data/` going into `nextcloud-data` instead.
+   Import the dump into `mariadb-0`.
 5. Scale to 1, disable maintenance mode, verify, then remove the host
    directories.
 

@@ -1,0 +1,28 @@
+# Application code, config/ and installed apps. Small; can be recreated from
+# the image except for config/.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-app
+  labels:
+    app.kubernetes.io/name: nextcloud
+    app.kubernetes.io/component: app
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 5Gi
+---
+# User files. Size this for your data; see docs/adr/0010-separate-data-volume.md.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: nextcloud-data
+  labels:
+    app.kubernetes.io/name: nextcloud
+    app.kubernetes.io/component: app
+spec:
+  accessModes: [ReadWriteOnce]
+  resources:
+    requests:
+      storage: 20Gi

@@ -1,6 +1,6 @@
 # ADR 0006: Pin every image tag and automate bumps
 
-- Status: Proposed
+- Status: Accepted (2026-11-23; implemented on branch `p1-restructure`)
 - Date: 2026-11-22
 
 ## Context

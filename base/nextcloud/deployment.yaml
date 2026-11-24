@@ -1,0 +1,175 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nextcloud
+  labels:
+    app.kubernetes.io/name: nextcloud
+    app.kubernetes.io/component: app
+spec:
+  replicas: 1
+  # Never run two versions against the same volume (upgrades run on start).
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nextcloud
+      app.kubernetes.io/component: app
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nextcloud
+        app.kubernetes.io/component: app
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      initContainers:
+        # A freshly provisioned volume is owned by root (and may contain
+        # lost+found), so the image's entrypoint would not hand it to
+        # www-data. Not recursive: only the mount point itself.
+        - name: data-permissions
+          image: nextcloud
+          command: [sh, -c, "chown 33:33 /var/www/html/data && chmod 0770 /var/www/html/data"]
+          resources:
+            requests:
+              cpu: 10m
+              memory: 16Mi
+            limits:
+              memory: 64Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN, FOWNER]
+          volumeMounts:
+            - name: data
+              mountPath: /var/www/html/data
+        # Background jobs every five minutes. A native sidecar (init container
+        # with restartPolicy: Always) starts before and stops after the app.
+        - name: cron
+          image: nextcloud
+          restartPolicy: Always
+          command: [/cron.sh]
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            # crond runs as root and switches to www-data for each job.
+            capabilities:
+              drop: [ALL]
+              add: [SETUID, SETGID]
+          volumeMounts:
+            - name: app
+              mountPath: /var/www/html
+            - name: data
+              mountPath: /var/www/html/data
+      containers:
+        - name: nextcloud
+          image: nextcloud
+          envFrom:
+            # Per-installation settings (hostname, proxy, time zone); each
+            # overlay generates this ConfigMap.
+            - configMapRef:
+                name: nextcloud-env
+          env:
+            - name: MYSQL_HOST
+              value: mariadb
+            - name: MYSQL_DATABASE
+              value: nextcloud
+            - name: MYSQL_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-credentials
+                  key: mariadb-user
+            - name: MYSQL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-credentials
+                  key: mariadb-password
+            - name: NEXTCLOUD_ADMIN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-credentials
+                  key: nextcloud-admin-user
+            - name: NEXTCLOUD_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nextcloud-credentials
+                  key: nextcloud-admin-password
+            # The proxy in front (ingress or port-forward) limits request
+            # size; Apache's own default would cap uploads at 1 GiB.
+            - name: APACHE_BODY_LIMIT
+              value: "0"
+          ports:
+            - name: http
+              containerPort: 80
+          # First start copies the application into the volume and installs;
+          # allow up to ten minutes. Probes send Host: localhost because
+          # requests for the Pod IP fail the trusted-domain check (400) and
+          # the image always trusts localhost.
+          startupProbe:
+            httpGet:
+              path: /status.php
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /status.php
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /status.php
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: localhost
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            # The entrypoint copies the app into the volume as root (chown),
+            # Apache binds port 80 and switches to www-data, and the parent
+            # process signals its children.
+            capabilities:
+              drop: [ALL]
+              add: [CHOWN, DAC_OVERRIDE, FOWNER, KILL, NET_BIND_SERVICE, SETGID, SETUID]
+          volumeMounts:
+            - name: app
+              mountPath: /var/www/html
+            - name: data
+              mountPath: /var/www/html/data
+            - name: post-install
+              mountPath: /docker-entrypoint-hooks.d/post-installation
+              readOnly: true
+      volumes:
+        - name: app
+          persistentVolumeClaim:
+            claimName: nextcloud-app
+        - name: data
+          persistentVolumeClaim:
+            claimName: nextcloud-data
+        - name: post-install
+          configMap:
+            name: nextcloud-post-install
+            defaultMode: 0755

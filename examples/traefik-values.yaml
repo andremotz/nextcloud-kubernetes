@@ -1,0 +1,20 @@
+# Settings for the Traefik Helm chart (tested with chart 42.4.2, Traefik
+# v3.7) that Nextcloud needs. On k3s, put the "ports" section into a
+# HelmChartConfig for the bundled Traefik instead.
+#
+#   helm upgrade --install traefik traefik/traefik -n traefik \
+#     --create-namespace -f examples/traefik-values.yaml
+ports:
+  web:
+    http:
+      # Send plain HTTP to HTTPS at the controller.
+      redirections:
+        entryPoint:
+          to: websecure
+          scheme: https
+          permanent: true
+  websecure:
+    transport:
+      respondingTimeouts:
+        # Traefik's default of 60s aborts large uploads with 502.
+        readTimeout: 3600s

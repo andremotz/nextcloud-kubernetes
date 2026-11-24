@@ -1,0 +1,19 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+
+configMapGenerator:
+  - name: nextcloud-post-install
+    files:
+      - hooks/10-background-jobs.sh
+
+# Nextcloud can only be upgraded one major version at a time; see
+# docs/specs/004-operations.md. helm/values*.yaml must use the same tag
+# (checked by `make validate`).
+images:
+  - name: nextcloud
+    newTag: 34.0.6-apache

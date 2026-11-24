@@ -1,0 +1,9 @@
+config:
+  # Long lines are fine in prose and tables.
+  MD013: false
+  # The README uses "Heading:" style.
+  MD026: false
+globs:
+  - "**/*.md"
+ignores:
+  - .render/**

@@ -1,0 +1,18 @@
+# Traefik-specific additions for overlays/example: HSTS and the
+# CalDAV/CardDAV discovery redirects that Nextcloud cannot do itself behind a
+# proxy. Needs Traefik's CRDs; timeouts are set on Traefik itself, see
+# examples/traefik-values.yaml.
+apiVersion: kustomize.config.k8s.io/v1alpha1
+kind: Component
+
+resources:
+  - middlewares.yaml
+
+patches:
+  - target:
+      kind: Ingress
+      name: nextcloud
+    patch: |-
+      - op: add
+        path: /metadata/annotations/traefik.ingress.kubernetes.io~1router.middlewares
+        value: nextcloud-nextcloud-headers@kubernetescrd,nextcloud-nextcloud-dav-redirect@kubernetescrd

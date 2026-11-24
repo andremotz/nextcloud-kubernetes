@@ -1,0 +1,58 @@
+# Template for a real install behind an ingress controller with cert-manager.
+#
+#   cp secrets.env.example secrets.env   # then fill in strong values
+#   edit settings.env                    # hostname, proxy range, time zone
+#   kubectl apply --server-side -k overlays/example
+#
+# Prerequisites: a default StorageClass, an ingress controller, cert-manager.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+  - ingress.yaml
+  - issuer-selfsigned.yaml
+  # For a trusted certificate: set your e-mail address in this file,
+  # uncomment it, and set "nextcloud-letsencrypt" in ingress.yaml.
+  # - issuer-letsencrypt.yaml
+
+# Controller-specific additions (HSTS, /.well-known redirects). Uncomment the
+# one for your ingress controller; see README "Ingress controller settings".
+# components:
+#   - ../../components/traefik
+
+secretGenerator:
+  - name: nextcloud-credentials
+    namespace: nextcloud
+    envs:
+      - secrets.env
+
+configMapGenerator:
+  - name: nextcloud-env
+    namespace: nextcloud
+    envs:
+      - settings.env
+
+# The hostname is set once, in settings.env, and copied into the Ingress.
+replacements:
+  - source:
+      kind: ConfigMap
+      name: nextcloud-env
+      fieldPath: data.NEXTCLOUD_TRUSTED_DOMAINS
+    targets:
+      - select:
+          kind: Ingress
+          name: nextcloud
+        fieldPaths:
+          - spec.rules.0.host
+          - spec.tls.0.hosts.0
+
+patches:
+  # Size of the user-data volume.
+  - target:
+      kind: PersistentVolumeClaim
+      name: nextcloud-data
+    patch: |-
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: 20Gi

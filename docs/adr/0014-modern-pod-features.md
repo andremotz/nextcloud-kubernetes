@@ -1,6 +1,6 @@
 # ADR 0014: Use current Pod features and set a minimum Kubernetes version
 
-- Status: Proposed
+- Status: Accepted (2026-11-23). Native sidecar, startup probe, `fsGroupChangePolicy` (MariaDB), seccomp and Pod Security labels are implemented; the optional user-namespace component (WI-40) is not.
 - Date: 2026-11-22
 
 ## Context

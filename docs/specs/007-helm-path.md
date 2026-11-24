@@ -12,7 +12,7 @@ values file from this repository.
 
 ## Layout
 
-```
+```text
 helm/
   README.md               # install, upgrade, how it maps to the manifests path
   values.yaml             # curated values for a real install (ingress + TLS)
@@ -70,11 +70,17 @@ Open design choice, to be settled when the chart is evaluated
 Option B is the fallback and the likely outcome if the subchart situation is
 unsatisfactory.
 
+**Decided 2026-11-23: option B.** Chart 9.4.5 still uses Bitnami subcharts.
+`helm/database-local` and `helm/database-example` apply `base/mariadb` with
+a Secret of fixed name (`disableNameSuffixHash`), which the chart reads
+through `externalDatabase.existingSecret`. The Secret has a `mariadb-user`
+key on both paths because the chart reads the user from the Secret.
+
 ## Testing
 
 - `make validate` renders both values files with `helm template` and runs
   the same kubeconform and kube-linter checks as for the overlays.
-- `make smoke PATH_UNDER_TEST=helm` installs the chart with
+- `make deploy-helm smoke-helm` (as implemented) installs the chart with
   `values-local.yaml` into a kind cluster and runs `hack/smoke-test.sh`. The
   script takes namespace and Service name as parameters, since the chart's
   resource names differ.

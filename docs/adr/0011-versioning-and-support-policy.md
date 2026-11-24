@@ -1,6 +1,6 @@
 # ADR 0011: Versioning and support policy
 
-- Status: Proposed
+- Status: Accepted (2026-11-23). CHANGELOG and tested-versions table exist; no release has been tagged yet.
 - Date: 2026-11-22
 
 ## Context

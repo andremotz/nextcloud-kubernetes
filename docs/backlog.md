@@ -1,7 +1,8 @@
 # Backlog
 
 Written 2026-11-22 against commit `0c6e488`. P0 implemented on branch
-`modernisation-plan` the same day; boxes are ticked only where the result
+`modernisation-plan` the same day, P1 on branch `p1-restructure` on
+2026-11-23; boxes are ticked only where the result
 was actually checked. Priorities:
 
 - **P0**: defects in the manifests as they are today; fixable without any
@@ -109,71 +110,91 @@ manifests rely on AJAX cron. The fix (cron sidecar) is designed in spec 002
 and tracked under WI-13/WI-38; until then the README could tell users to set
 "Cron" and add a host cron entry, or accept AJAX cron.
 
-- [ ] Decide: interim README note, or wait for WI-13.
+- [x] Resolved by WI-13/WI-38: cron sidecar plus a post-installation hook
+      that sets background jobs to Cron. *(verified on kind, Kubernetes 1.37)*: `lastcron` advances every
+      five minutes.
 
 ### WI-07 Decide the ADRs
 
-- [ ] ADR 0001–0008 each marked Accepted, Rejected or amended.
-- [ ] Ingress vs Gateway API question in ADR 0005 answered.
+- [x] ADR 0001–0008 each marked Accepted, Rejected or amended (all accepted;
+      0007 amended: no `--log-bin`).
+- [x] Ingress vs Gateway API question in ADR 0005 answered (Ingress).
 
 ### WI-08 Tag the current state
 
-- [ ] Tag `v1-legacy` on the last commit before the restructure, so the blog
-      post can link to a stable version.
+- [x] Tag `v1-legacy` on the last commit before the restructure, so the blog
+      post can link to a stable version. *(Created locally; not pushed yet.)*
 
 ### WI-09 Kustomize base and example overlay (ADR 0002)
 
-- [ ] Layout from [spec 001](specs/001-target-architecture.md) in place.
-- [ ] `nextcloud` namespace and `app.kubernetes.io/*` labels.
-- [ ] `kubectl apply -k overlays/example` is the only install command.
-- [ ] `kubernetes-yaml/` removed.
+- [x] Layout from [spec 001](specs/001-target-architecture.md) in place
+      (base split into `namespace/`, `mariadb/`, `nextcloud/` so the Helm
+      path can reuse `base/mariadb`).
+- [x] `nextcloud` namespace and `app.kubernetes.io/*` labels.
+- [x] `kubectl apply -k overlays/example` is the only install command.
+- [x] `kubernetes-yaml/` removed.
 
 ### WI-10 Secret for credentials (ADR 0003)
 
-- [ ] `secretGenerator` from git-ignored `secrets.env`; example file committed.
-- [ ] No password literal in any committed file.
+- [x] `secretGenerator` from git-ignored `secrets.env`; example file committed.
+- [x] No password literal in any committed file, except the deliberately
+      fake ones in `overlays/local` and `helm/database-local` (ADR 0012).
 
 ### WI-11 PersistentVolumeClaims (ADR 0004)
 
-- [ ] No `hostPath` anywhere.
-- [ ] Data survives Pod deletion on a k3s or kind cluster.
+- [x] No `hostPath` anywhere.
+- [x] Data survives Pod deletion on a k3s or kind cluster, for both the
+      Nextcloud Pod and `mariadb-0`. *(verified on kind, Kubernetes 1.37)*
 
 ### WI-12 MariaDB StatefulSet (ADR 0007)
 
-- [ ] StatefulSet, headless Service, recommended server flags, probes.
+- [x] StatefulSet, headless Service, recommended server flags, probes
+      (`healthcheck.sh`), non-root. *(verified on kind, Kubernetes 1.37)*
 
 ### WI-13 Nextcloud Deployment hardening (specs 001, 002)
 
-- [ ] Probes including startup probe.
-- [ ] Resource requests and memory limit.
-- [ ] `securityContext` per spec 001.
-- [ ] Cron sidecar; background jobs set to Cron.
-- [ ] Default-only fields removed.
+- [x] Probes including startup probe (`Host: localhost`, because the Pod IP
+      fails the trusted-domain check).
+- [x] Resource requests and memory limit.
+- [x] `securityContext` per spec 001: seccomp, no privilege escalation,
+      capabilities dropped to the set the entrypoint needs. *(verified on kind, Kubernetes 1.37)*
+- [x] Cron sidecar; background jobs set to Cron. *(verified on kind, Kubernetes 1.37)*
+- [x] Default-only fields removed.
 
 ### WI-14 Ingress and cert-manager (ADR 0005, spec 003)
 
-- [ ] `proxy-pod.yaml`, `nginx.conf`, `omgwtfssl-pod.yaml` removed.
-- [ ] Ingress plus self-signed and Let's Encrypt issuers.
-- [ ] Acceptance checks from spec 003 pass.
+- [x] `proxy-pod.yaml`, `nginx.conf`, `omgwtfssl-pod.yaml` removed.
+- [x] Ingress plus self-signed and Let's Encrypt issuers.
+- [x] Acceptance checks from spec 003 pass with Traefik 3.7 plus
+      `components/traefik` and `examples/traefik-values.yaml`. *(verified on kind, Kubernetes 1.37)*
+      Checked: HTTP→HTTPS, HSTS, `.well-known` redirects, a self-signed
+      certificate issued by cert-manager, and a 1.3 GB upload. Without the
+      Traefik settings the upload fails with 502 after 60 s.
+- [ ] Let's Encrypt issuer and automatic renewal *(need a public DNS name)*.
+- [ ] Settings for controllers other than Traefik *(not tested)*.
 
 ### WI-15 CI (ADR 0008)
 
-- [ ] yamllint, kubeconform, kube-linter, markdownlint.
-- [ ] kind smoke test asserting `"installed":true` from `/status.php`.
-- [ ] Workflow required on pull requests.
+- [x] yamllint, kubeconform, kube-linter, markdownlint. *(Locally and in
+      CI; first run passed on PR #5.)*
+- [x] kind smoke test asserting `"installed":true` from `/status.php`.
+      *(Locally and in CI on 1.35, 1.36, 1.37 plus the Helm path.)*
+- [ ] Workflow required on pull requests *(repository setting; for the
+      maintainer)*.
 
 ### WI-16 Rewrite the README
 
-- [ ] States scope and links to the official Helm chart (ADR 0001).
-- [ ] Prerequisites as links (cluster, StorageClass, ingress controller,
+- [x] States scope and links to the official Helm chart (ADR 0001).
+- [x] Prerequisites as links (cluster, StorageClass, ingress controller,
       cert-manager) instead of a cluster-install walkthrough.
-- [ ] Quick start in at most five commands.
-- [ ] Configuration table for the overlay.
-- [ ] Per-controller table for upload size and timeout settings.
-- [ ] Warnings: data loss on namespace deletion; Secrets are not encrypted
+- [x] Quick start in at most five commands.
+- [x] Configuration table for the overlay.
+- [ ] Per-controller table for upload size and timeout settings *(requirements
+      table plus tested Traefik settings; other controllers missing)*.
+- [x] Warnings: data loss on namespace deletion; Secrets are not encrypted
       at rest by default.
-- [ ] Migration note for users of the old layout.
-- [ ] "Updates" section replaced by `CHANGELOG.md`.
+- [x] Migration note for users of the old layout *(outline; not executed)*.
+- [x] "Updates" section replaced by `CHANGELOG.md`.
 
 ## P2: hygiene and documentation
 
@@ -230,26 +251,29 @@ priority is given per item.
 
 ### WI-24 Decide ADRs 0009–0012 (P1)
 
-- [ ] Each marked Accepted, Rejected or amended.
-- [ ] ADR 0002 and ADR 0004 updated to mention the ADRs that amend them.
+- [x] Each marked Accepted, Rejected or amended.
+- [x] ADR 0002 and ADR 0004 updated to mention the ADRs that amend them.
 
 ### WI-25 Local quickstart overlay (P1, ADR 0012)
 
-- [ ] `overlays/local` works on a fresh kind cluster with nothing else
-      installed.
-- [ ] Ingress moved out of `base/`.
-- [ ] CI smoke test (WI-15) uses this overlay.
+- [x] `overlays/local` works on a fresh kind cluster with nothing else
+      installed. *(verified on kind, Kubernetes 1.37)*
+- [x] Ingress moved out of `base/`.
+- [x] CI smoke test (WI-15) uses this overlay.
 
 ### WI-26 Separate data volume (P1, ADR 0010)
 
-- [ ] `nextcloud-app` and `nextcloud-data` claims; cron sidecar mounts both.
-- [ ] Spec 004 backup, restore and migration steps updated for two volumes.
+- [x] `nextcloud-app` and `nextcloud-data` claims; cron sidecar mounts both.
+      An init container hands a fresh data volume to `www-data`.
+- [x] Spec 004 backup, restore and migration steps updated for two volumes.
 
 ### WI-27 Makefile, kind config and smoke-test script (P1, spec 005)
 
-- [ ] Targets from spec 005 exist; CI calls them.
-- [ ] `hack/smoke-test.sh` covers login, upload, Pod deletion and re-read.
-- [ ] Failure output includes events and container logs.
+- [x] Targets from spec 005 exist; CI calls them.
+- [x] `hack/smoke-test.sh` covers login, upload, Pod deletion and re-read.
+- [x] Failure output includes events and container logs. *(Checked by
+      running the smoke test with a wrong admin password; needed `set -E` so
+      the ERR trap also fires inside functions.)*
 
 ### WI-28 Upgrade test in CI (P2, spec 005)
 
@@ -261,9 +285,11 @@ priority is given per item.
 
 Do this in the same pull request that introduces CI, not afterwards.
 
-- [ ] Actions pinned by commit SHA.
-- [ ] `permissions: contents: read` by default.
-- [ ] Renovate configured to update action SHAs.
+- [x] Actions pinned by commit SHA (resolved with `gh api`).
+- [x] `permissions: contents: read` by default.
+- [x] Renovate configured to update action SHAs. *(Validated with
+      `renovate-config-validator`; does nothing until the Renovate app is
+      installed on the repository.)*
 
 ### WI-30 Security scanning (P2, spec 006)
 
@@ -342,25 +368,30 @@ Items from ADR 0013–0014, spec 007 and
 
 This is research, and it comes before any Helm work.
 
-- [ ] Current chart version, release cadence and open-issue situation noted.
-- [ ] How the chart provides MariaDB and Redis today (Bitnami subcharts or
-      something else) established; spec 007 database option A or B chosen.
-- [ ] Each row of the spec 007 parity table checked against the chart's
+- [x] Current chart version, release cadence and open-issue situation noted
+      (ADR 0013).
+- [x] How the chart provides MariaDB and Redis today (Bitnami subcharts or
+      something else) established; spec 007 database option A or B chosen
+      (Bitnami subcharts, so option B).
+- [x] Each row of the spec 007 parity table checked against the chart's
       `values.yaml`.
-- [ ] ADR 0013 and ADR 0014 marked Accepted, Rejected or amended.
+- [x] ADR 0013 and ADR 0014 marked Accepted, Rejected or amended.
 
 ### WI-46 Helm path (P1, spec 007)
 
-- [ ] `helm/values.yaml`, `helm/values-local.yaml`, `helm/CHART_VERSION`,
+- [x] `helm/values.yaml`, `helm/values-local.yaml`, `helm/CHART_VERSION`,
       `helm/README.md`.
-- [ ] `make validate` and `make smoke` cover the Helm path.
-- [ ] Renovate tracks the chart version.
-- [ ] README has the "which path" table.
+- [x] `make validate` and `make smoke` cover the Helm path (`make
+      deploy-helm smoke-helm`). *(verified on kind, Kubernetes 1.37)* `values.yaml` (ingress variant)
+      is only rendered, not installed.
+- [x] Renovate tracks the chart version (custom regex manager on
+      `helm/CHART_VERSION`).
+- [x] README has the "which path" table.
 
 ### WI-38 Cron as a native sidecar (P1, ADR 0014)
 
-- [ ] Cron container moved to `initContainers` with `restartPolicy: Always`.
-- [ ] Minimum Kubernetes version stated in the README.
+- [x] Cron container moved to `initContainers` with `restartPolicy: Always`.
+- [x] Minimum Kubernetes version stated in the README (1.33).
 
 ### WI-39 `fsGroupChangePolicy: OnRootMismatch` (P2, ADR 0014)
 
@@ -398,6 +429,18 @@ This is research, and it comes before any Helm work.
       Kustomize overlay and the Helm values.
 - [ ] README note on where the Secret comes from in a GitOps setup
       (it cannot come from the git-ignored `secrets.env`).
+
+### WI-48 Renovate and the Nextcloud tag in several files (P2)
+
+The Nextcloud tag lives in `base/nextcloud/kustomization.yaml` and twice in
+each Helm values file (`image.tag`, the init container image). `make
+check-tags` fails if they differ. Whether Renovate updates all of them in
+one pull request is not verified; `image.tag` without `image.repository`
+is probably not detected by its helm-values manager.
+
+- [ ] Run Renovate once (or its dry-run mode) and check what it detects.
+- [ ] If needed: set `image.repository` explicitly and group all Nextcloud
+      image updates into one pull request.
 
 ### WI-45 Recurring: review when upstream drops a Kubernetes version (P3)
 

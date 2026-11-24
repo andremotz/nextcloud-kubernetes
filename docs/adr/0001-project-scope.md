@@ -1,6 +1,6 @@
 # ADR 0001: Stay a minimal, readable reference
 
-- Status: Proposed
+- Status: Accepted (2026-11-23; implemented on branch `p1-restructure`)
 - Date: 2026-11-22
 - Amended by: [ADR 0013](0013-helm-support.md) ("no Helm chart" becomes "no
   Helm chart of our own"; a values file for the official chart is in scope)

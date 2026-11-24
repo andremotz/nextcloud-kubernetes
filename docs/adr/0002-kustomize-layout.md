@@ -1,7 +1,8 @@
 # ADR 0002: Kustomize base + example overlay
 
-- Status: Proposed
+- Status: Accepted (2026-11-23; implemented on branch `p1-restructure`)
 - Date: 2026-11-22
+- Amended by: [ADR 0012](0012-local-quickstart-overlay.md) (second overlay, `overlays/local`; Ingress moved out of `base/`)
 
 ## Context
 
@@ -15,7 +16,7 @@ committed are not valid input for `kubectl apply` or for any linter.
 
 Restructure the manifests as a Kustomize base with an example overlay:
 
-```
+```text
 base/                  # valid, placeholder-free manifests
   kustomization.yaml
   namespace.yaml

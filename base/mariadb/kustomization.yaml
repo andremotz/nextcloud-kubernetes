@@ -1,0 +1,12 @@
+# Also used on its own by the Helm path (helm/database-*), so the image
+# version is set here, once.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - statefulset.yaml
+  - service.yaml
+
+images:
+  - name: mariadb
+    newTag: 11.8.9

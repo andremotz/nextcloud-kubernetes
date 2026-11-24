@@ -1,6 +1,6 @@
 # ADR 0010: Keep user data on its own volume
 
-- Status: Proposed
+- Status: Accepted (2026-11-23; implemented on branch `p1-restructure`)
 - Date: 2026-11-22
 - Amends: [ADR 0004](0004-persistent-storage.md)
 

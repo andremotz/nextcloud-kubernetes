@@ -1,0 +1,7 @@
+# Render-only target so `make validate` also checks components/traefik.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../../overlays/example
+components:
+  - ../../../components/traefik

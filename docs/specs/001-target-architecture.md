@@ -32,7 +32,7 @@ suites, monitoring stack, cluster installation.
 
 Request path:
 
-```
+```text
 client ──HTTPS──▶ ingress controller ──HTTP──▶ Service nextcloud ──▶ Pod nextcloud
                                                                        │
                                                                        ▼
@@ -41,7 +41,7 @@ client ──HTTPS──▶ ingress controller ──HTTP──▶ Service nextc
 
 ## Repository layout
 
-```
+```text
 README.md
 LICENSE
 CHANGELOG.md

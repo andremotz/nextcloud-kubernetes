@@ -1,0 +1,40 @@
+# Try Nextcloud on a laptop cluster (kind, minikube, k3s) with nothing else
+# installed. Access: kubectl -n nextcloud port-forward svc/nextcloud 8080:80
+# then open http://localhost:8080 and log in as admin / local-admin-password.
+#
+# The credentials below are deliberately fake and committed. Never expose
+# this overlay beyond localhost. See docs/adr/0012-local-quickstart-overlay.md.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+  - ../../base
+
+secretGenerator:
+  - name: nextcloud-credentials
+    namespace: nextcloud
+    literals:
+      - mariadb-user=nextcloud
+      - mariadb-password=local-db-password
+      - mariadb-root-password=local-db-root-password
+      - nextcloud-admin-user=admin
+      - nextcloud-admin-password=local-admin-password
+
+configMapGenerator:
+  - name: nextcloud-env
+    namespace: nextcloud
+    literals:
+      # Plain HTTP through port-forward: no OVERWRITEPROTOCOL/OVERWRITECLIURL,
+      # otherwise the login would redirect to https.
+      - NEXTCLOUD_TRUSTED_DOMAINS=localhost
+      - PHP_UPLOAD_LIMIT=4G
+      - TZ=UTC
+
+patches:
+  - target:
+      kind: PersistentVolumeClaim
+      name: nextcloud-data
+    patch: |-
+      - op: replace
+        path: /spec/resources/requests/storage
+        value: 5Gi

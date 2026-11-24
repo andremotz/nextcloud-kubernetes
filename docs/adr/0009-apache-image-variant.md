@@ -1,6 +1,6 @@
 # ADR 0009: Use the Apache variant of the Nextcloud image
 
-- Status: Proposed
+- Status: Accepted (2026-11-23; implemented on branch `p1-restructure`)
 - Date: 2026-11-22
 
 ## Context
